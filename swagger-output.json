@@ -1,0 +1,269 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Moco API",
+    "description": "Moco API 문서입니다.",
+    "version": "1.0.0"
+  },
+  "host": "localhost:9000",
+  "basePath": "/admin",
+  "schemes": [
+    "http"
+  ],
+  "paths": {
+    "/admin/addTest": {
+      "post": {
+        "tags": ["테스트 추가"],
+        "summary": "테스트 생성",
+        "description": "테스트 생성 api 입니다. addTest, addType, addQuestion 순서대로 호출해야 합니다.",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "testName": {
+                  "example": "String",
+                  "type": "string",
+                  "required": true
+                },
+                "testDescription": {
+                  "example": "String",
+                  "type": "string",
+                  "required": true
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "test": {
+                  "example": {
+                    "id": "number",
+                    "name": "추가한 테스트 이름 입니다.",
+                    "description": "해당 테스트에 대한 설명 입니다.",
+                    "is_published": false
+                  },
+                  "type": "object"
+                },                
+                "status": {
+                  "example": "success",
+                  "type": "string"
+                },
+                "message": {
+                  "example": "테스트가 성공적으로 추가되었습니다.",
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "example": "error",
+                  "type": "string"
+                },
+                "message": {
+                  "example": "필수 항목을 모두 입력해주세요.",
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "example": "error",
+                  "type": "string"
+                },
+                "message": {
+                  "example": "테스트 추가 중 서버 오류가 발생했습니다.",
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/addType": {
+      "post": {
+        "tags": ["테스트 추가"],
+        "summary": "테스트 타입 생성",
+        "description": "테스트 타입 추가",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "testId": {
+                  "example": "number",
+                  "type": "number",
+                  "required": true
+                },
+                "types": {
+                  "example": [
+                    {
+                      "name": "String",
+                      "description": "String"
+                    }
+                  ],
+                  "type": "array",
+                  "required": true
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "example": "success",
+                  "type": "string"
+                },
+                "message": {
+                  "example": "테스트가 성공적으로 추가되었습니다.",
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "example": "error",
+                  "type": "string"
+                },
+                "message": {
+                  "example": "적절한 타입 데이터를 제공해주세요. 타입은 최소 2개 이상이어야 합니다.",
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "example": "error",
+                  "type": "string"
+                },
+                "message": {
+                  "example": "타입 추가 중 서버 오류가 발생했습니다.",
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/addQuestion": {
+      "post": {
+        "tags": ["테스트 추가"],
+        "summary": "테스트 질문 생성",
+        "description": "테스트 질문 추가",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "testId": {
+                  "example": "number",
+                  "type": "number",
+                  "required": true
+                },
+                "questions": {
+                  "example": [
+                    {
+                      "content": "String",
+                      "types": []
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "example": "success",
+                  "type": "string"
+                },
+                "message": {
+                  "example": "질문이 성공적으로 추가되었습니다.",
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "example": "error",
+                  "type": "string"
+                },
+                "message": {
+                  "example": ["질문은 최소 4개 이상이어야 합니다.", "각 질문은 내용과 타입 목록을 가져야 합니다."],
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "example": "error",
+                  "type": "string"
+                },
+                "message": {
+                  "example": "질문 추가 중 서버 오류가 발생했습니다.",
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
