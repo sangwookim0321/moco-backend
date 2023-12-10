@@ -5,6 +5,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
 async function checkAdminPermission(req, res) {
+  // ---------------------------- 인증 함수 ----------------------------
   const token = req.headers.authorization.split(" ")[1];
   const decoded = jwt.verify(token, process.env.SECRET_KEY);
   const userId = decoded.userId;
@@ -24,6 +25,7 @@ async function checkAdminPermission(req, res) {
 }
 
 router.post("/createAdmin", async (req, res) => {
+  // ---------------------------- 관리자 생성 ----------------------------
   const token = req.headers.authorization.split(" ")[1];
   const decoded = jwt.verify(token, process.env.SECRET_KEY);
   const userId = decoded.userId;
@@ -70,6 +72,7 @@ router.post("/createAdmin", async (req, res) => {
 });
 
 router.post("/login", async (req, res) => {
+  // ---------------------------- 로그인 ----------------------------
   const { email, password } = req.body;
 
   if (!email || !password) {
@@ -124,7 +127,30 @@ router.post("/login", async (req, res) => {
   }
 });
 
+router.post("/logout", async (req, res) => {
+  // ---------------------------- 로그아웃 ----------------------------
+  await checkAdminPermission(req, res);
+
+  try {
+    const accessToken = jwt.sign({ userId: userId }, process.env.SECRET_KEY, {
+      expiresIn: "1s", // 액세스 토큰의 유효 기간을 1초로 설정하여 즉시 만료
+    });
+
+    res.status(200).json({
+      status: "success",
+      message: "로그아웃 되었습니다.",
+    });
+  } catch (err) {
+    console.error("/logout Error: ", err);
+    res.status(500).json({
+      status: "error",
+      message: "로그아웃 중 서버 오류가 발생했습니다.",
+    });
+  }
+});
+
 router.post("/refreshToken", async (req, res) => {
+  // ---------------------------- 리프레시 토큰 ----------------------------
   const refreshToken = req.body.refreshToken;
 
   if (!refreshToken) {
@@ -146,14 +172,21 @@ router.post("/refreshToken", async (req, res) => {
       expiresIn: "1h", // 액세스 토큰의 유효 기간
     });
 
-    res.json({ accessToken });
+    return res.status(201).json({
+      status: "success",
+      message: "토큰이 갱신되었습니다.",
+      accessToken,
+    });
   } catch (err) {
     console.error("/refreshToken Error: ", err);
-    res.status(401).json({ message: "리프레시 토큰이 유효하지 않습니다." });
+    res
+      .status(401)
+      .json({ status: "error", message: "리프레시 토큰이 유효하지 않습니다." });
   }
 });
 
 router.post("/addTest", async (req, res) => {
+  // ---------------------------- 테스트 생성 ----------------------------
   await checkAdminPermission(req, res);
 
   const { testName, testDescription } = req.body;
@@ -186,6 +219,7 @@ router.post("/addTest", async (req, res) => {
 });
 
 router.post("/addType", async (req, res) => {
+  // ---------------------------- 테스트 타입 생성 ----------------------------
   await checkAdminPermission(req, res);
 
   const { testId, types } = req.body;
@@ -231,6 +265,7 @@ router.post("/addType", async (req, res) => {
 });
 
 router.post("/addQuestion", async (req, res) => {
+  // ---------------------------- 테스트 질문 생성 ----------------------------
   await checkAdminPermission(req, res);
 
   const { testId, questions } = req.body;
@@ -291,6 +326,7 @@ router.post("/addQuestion", async (req, res) => {
 });
 
 router.get("/getTests", async (req, res) => {
+  // ---------------------------- 테스트 목록 조회 ----------------------------
   await checkAdminPermission(req, res);
 
   const page = parseInt(req.query.page) || 1;
@@ -317,6 +353,7 @@ router.get("/getTests", async (req, res) => {
 });
 
 router.delete("/deleteTest", async (req, res) => {
+  // ---------------------------- 테스트 삭제 ----------------------------
   await checkAdminPermission(req, res);
 
   const { testId } = req.body;
