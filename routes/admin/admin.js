@@ -16,7 +16,7 @@ async function checkAdminPermission(req, res) {
   ]);
 
   // 사용자 역할이 1 또는 2인 경우에만 진행
-  if (user.rows[0].role !== 1 && user.rows[0].role !== 2) {
+  if (user.rows[0].role !== "1" && user.rows[0].role !== "2") {
     return res.status(403).json({
       status: "error",
       message: "권한이 없습니다.",
@@ -34,7 +34,7 @@ router.post("/createAdmin", async (req, res) => {
     userId,
   ]);
 
-  if (user.rows[0].role !== 1) {
+  if (user.rows[0].role !== "1") {
     return res.status(403).json({
       status: "error",
       message: "권한이 없습니다.",
@@ -92,7 +92,6 @@ router.post("/login", async (req, res) => {
     if (user.rows.length === 0) {
       return res.status(401).json({ message: "사용자를 찾을 수 없습니다" });
     }
-
     // 비밀번호 검증
     const isValid = await bcrypt.compare(password, user.rows[0].password);
 
@@ -394,3 +393,5 @@ router.delete("/deleteTest", async (req, res) => {
 });
 
 module.exports = router;
+
+// eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImlhdCI6MTcwMjIwMjU1NiwiZXhwIjoxNzAyMjA2MTU2fQ.r9PUffQCT7IajUgK-PuJvXuW-YIviZrkTDLPLcpHh5c
