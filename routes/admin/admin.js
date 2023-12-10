@@ -85,13 +85,14 @@ router.post("/login", async (req, res) => {
   try {
     // 데이터베이스에서 사용자 정보를 조회
     const user = await db.query(
-      "SELECT * FROM auth.accounts WHERE email = $1",
+      "SELECT id, role, username, email, password FROM auth.accounts WHERE email = $1",
       [email]
     );
 
     if (user.rows.length === 0) {
       return res.status(401).json({ message: "사용자를 찾을 수 없습니다" });
     }
+
     // 비밀번호 검증
     const isValid = await bcrypt.compare(password, user.rows[0].password);
 
@@ -101,11 +102,18 @@ router.post("/login", async (req, res) => {
 
     // 사용자 정보에서 userId 가져오기
     const userId = user.rows[0].id;
+    const userRole = user.rows[0].role;
+    const username = user.rows[0].username;
+    const userEmail = user.rows[0].email;
 
     // 액세스 토큰 및 리프레시 토큰 생성
-    const accessToken = jwt.sign({ userId }, process.env.SECRET_KEY, {
-      expiresIn: "1h",
-    });
+    const accessToken = jwt.sign(
+      { userId, role: userRole, username, email: userEmail },
+      process.env.SECRET_KEY,
+      {
+        expiresIn: "1h",
+      }
+    );
     const refreshToken = jwt.sign({ userId }, process.env.REFRESH_SECRET_KEY, {
       expiresIn: "7d",
     });
@@ -116,6 +124,9 @@ router.post("/login", async (req, res) => {
       message: "로그인 성공",
       accessToken,
       refreshToken,
+      role: userRole,
+      username,
+      email: userEmail,
     });
   } catch (err) {
     console.error("/login Error : ", err);
