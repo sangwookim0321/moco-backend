@@ -7,9 +7,7 @@
   },
   "host": "localhost:9000",
   "basePath": "/admin",
-  "schemes": [
-    "http"
-  ],
+  "schemes": ["http"],
   "paths": {
     "/admin/addTest": {
       "post": {
@@ -44,7 +42,7 @@
             "schema": {
               "type": "object",
               "properties": {
-                "test": {
+                "result": {
                   "example": {
                     "id": "number",
                     "name": "추가한 테스트 이름 입니다.",
@@ -52,7 +50,7 @@
                     "is_published": false
                   },
                   "type": "object"
-                },                
+                },
                 "status": {
                   "example": "success",
                   "type": "string"
@@ -240,7 +238,10 @@
                   "type": "string"
                 },
                 "message": {
-                  "example": ["질문은 최소 4개 이상이어야 합니다.", "각 질문은 내용과 타입 목록을 가져야 합니다."],
+                  "example": [
+                    "질문은 최소 4개 이상이어야 합니다.",
+                    "각 질문은 내용과 타입 목록을 가져야 합니다."
+                  ],
                   "type": "string"
                 }
               }
