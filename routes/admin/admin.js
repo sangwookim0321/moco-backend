@@ -476,10 +476,10 @@ router.put('/updateTest/:testId', upload.single('image'), checkAdminPermission, 
 	const { testName, testDescription, types, questions, oldImagePath } = req.body
 	const imageFile = req.file
 
-	if (!testName || !testDescription) {
+	if (!testName || !testDescription || !imageFile) {
 		return res.status(400).json({
 			status: 'error',
-			message: '테스트 이름과 설명은 필수입니다.',
+			message: '필수 항목을 모두 입력해주세요.',
 		})
 	}
 
