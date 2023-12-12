@@ -7,7 +7,7 @@ const multer = require('multer')
 const upload = multer({ dest: 'uploads/' })
 const fs = require('fs')
 
-async function checkAdminPermission(req, res) {
+async function checkAdminPermission(req, res, next) {
 	try {
 		// 토큰 추출 및 검증
 		const authHeader = req.headers.authorization
@@ -33,7 +33,7 @@ async function checkAdminPermission(req, res) {
 		}
 
 		// 사용자에게 권한이 있는 경우, 다음 미들웨어로 진행
-		return null
+		return next()
 	} catch (err) {
 		return res.status(401).json({
 			status: 'error',
@@ -112,7 +112,7 @@ router.post('/login', async (req, res) => {
 		// 비밀번호 검증
 		const isValid = await bcrypt.compare(password, userData.password)
 		if (!isValid) {
-			return res.status(401).json({ message: '인증 실패' })
+			return res.status(401).json({ message: '비밀번호가 일치하지 않습니다.' })
 		}
 
 		// JWT 토큰 생성
@@ -138,10 +138,8 @@ router.post('/login', async (req, res) => {
 	}
 })
 
-router.post('/logout', async (req, res) => {
+router.post('/logout', checkAdminPermission, async (req, res) => {
 	// ---------------------------- 로그아웃 ----------------------------
-	await checkAdminPermission(req, res)
-
 	try {
 		const accessToken = jwt.sign({ userId: userId }, process.env.SECRET_KEY, {
 			expiresIn: '1s', // 액세스 토큰의 유효 기간을 1초로 설정하여 즉시 만료
@@ -194,9 +192,8 @@ router.post('/refreshToken', async (req, res) => {
 	}
 })
 
-router.post('/addTest', upload.single('image'), async (req, res) => {
+router.post('/addTest', upload.single('image'), checkAdminPermission, async (req, res) => {
 	// 테스트 생성
-	await checkAdminPermission(req, res)
 
 	const { testName, testDescription } = req.body
 	const imageFile = req.file
@@ -216,8 +213,10 @@ router.post('/addTest', upload.single('image'), async (req, res) => {
 			throw uploadError
 		}
 
+		let created_at = new Date()
+
 		// Supabase를 사용하여 psych_tests.Tests 테이블에 새로운 테스트 추가
-		const { data, error } = await supabase.from('tests').insert({ name: testName, description: testDescription, is_published: false, path: filePath }).select()
+		const { data, error } = await supabase.from('tests').insert({ name: testName, description: testDescription, is_published: false, path: filePath, created_at }).select()
 
 		if (error) {
 			throw error
@@ -278,10 +277,8 @@ router.post('/addType', async (req, res) => {
 	}
 })
 
-router.post('/addQuestion', async (req, res) => {
+router.post('/addQuestion', checkAdminPermission, async (req, res) => {
 	// 테스트 질문 생성
-	await checkAdminPermission(req, res)
-
 	const { testId, questions } = req.body
 
 	if (!testId || !questions || !Array.isArray(questions) || questions.length < 4) {
@@ -328,9 +325,8 @@ router.post('/addQuestion', async (req, res) => {
 	}
 })
 
-router.get('/getTests', async (req, res) => {
+router.get('/getTests', checkAdminPermission, async (req, res) => {
 	// 테스트 목록 조회
-	await checkAdminPermission(req, res)
 
 	const page = parseInt(req.query.page) || 1
 	const limit = parseInt(req.query.limit) || 10
@@ -364,9 +360,8 @@ router.get('/getTests', async (req, res) => {
 	}
 })
 
-router.delete('/deleteTest', async (req, res) => {
+router.delete('/deleteTest', checkAdminPermission, async (req, res) => {
 	// 테스트 삭제
-	await checkAdminPermission(req, res)
 
 	const { testId } = req.body
 
@@ -399,6 +394,35 @@ router.delete('/deleteTest', async (req, res) => {
 		res.status(500).json({
 			status: 'error',
 			mesage: '테스트 삭제 중 서버 오류가 발생했습니다.',
+		})
+	}
+})
+
+router.put('/updateTestPublishState', checkAdminPermission, async (req, res) => {
+	const { testId, isPublished } = req.body
+
+	if (!testId || typeof isPublished !== 'boolean' || isPublished === undefined || isPublished === null) {
+		return res.status(400).json({
+			status: 'error',
+			message: '적절한 데이터를 제공해주세요.',
+		})
+	}
+
+	try {
+		const { error } = await supabase.from('tests').update({ is_published: isPublished }).match({ id: testId })
+
+		if (error) {
+			throw error
+		}
+
+		res.status(200).json({
+			status: 'success',
+			message: '테스트 공개 상태가 성공적으로 변경되었습니다.',
+		})
+	} catch (err) {
+		res.status(500).json({
+			status: 'error',
+			message: '테스트 공개 상태 변경 중 서버 오류가 발생했습니다.',
 		})
 	}
 })
