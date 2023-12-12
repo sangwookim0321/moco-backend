@@ -170,13 +170,13 @@ router.post('/refreshToken', async (req, res) => {
 	}
 
 	try {
-		// 리프레시 토큰을 검증하고 사용자 정보를 얻습니다.
+		// 리프레시 토큰을 검증하고 사용자 정보를 얻음
 		const decoded = jwt.verify(refreshToken, process.env.REFRESH_SECRET_KEY)
 		const userId = decoded.userId
 
-		// 여기에서 사용자의 권한을 확인하거나 다른 추가 검증을 수행할 수 있습니다.
+		//
 
-		// 새로운 액세스 토큰을 발급합니다.
+		// 새로운 액세스 토큰을 발급
 		const accessToken = jwt.sign({ userId: userId }, process.env.SECRET_KEY, {
 			expiresIn: '1h', // 액세스 토큰의 유효 기간
 		})
@@ -193,7 +193,7 @@ router.post('/refreshToken', async (req, res) => {
 })
 
 router.post('/addTest', upload.single('image'), checkAdminPermission, async (req, res) => {
-	// 테스트 생성
+	// ---------------------------- 테스트 생성 ----------------------------
 
 	const { testName, testDescription } = req.body
 	const imageFile = req.file
@@ -236,9 +236,8 @@ router.post('/addTest', upload.single('image'), checkAdminPermission, async (req
 	}
 })
 
-router.post('/addType', async (req, res) => {
-	// 테스트 타입 생성
-	await checkAdminPermission(req, res)
+router.post('/addType', checkAdminPermission, async (req, res) => {
+	// ---------------------------- 테스트 타입 생성 ----------------------------
 
 	const { testId, types } = req.body
 
@@ -278,7 +277,7 @@ router.post('/addType', async (req, res) => {
 })
 
 router.post('/addQuestion', checkAdminPermission, async (req, res) => {
-	// 테스트 질문 생성
+	// ---------------------------- 테스트 질문 생성 ----------------------------
 	const { testId, questions } = req.body
 
 	if (!testId || !questions || !Array.isArray(questions) || questions.length < 4) {
@@ -326,7 +325,7 @@ router.post('/addQuestion', checkAdminPermission, async (req, res) => {
 })
 
 router.get('/getTests', checkAdminPermission, async (req, res) => {
-	// 테스트 목록 조회
+	// ---------------------------- 테스트 목록 조회 ----------------------------
 
 	const page = parseInt(req.query.page) || 1
 	const limit = parseInt(req.query.limit) || 10
@@ -360,8 +359,51 @@ router.get('/getTests', checkAdminPermission, async (req, res) => {
 	}
 })
 
+router.get('/getTests/:testId', checkAdminPermission, async (req, res) => {
+	// ---------------------------- 테스트 상세 조회 ----------------------------
+	if (!req.params.testId) {
+		return res.status(400).json({
+			status: 'error',
+			message: '테스트 ID를 제공해주세요.',
+		})
+	}
+
+	try {
+		const testId = req.params.testId
+
+		// tests 테이블에서 특정 테스트 조회
+		const { data: testData, error: testError } = await supabase.from('tests').select('*').eq('id', testId)
+
+		if (testError) throw testError
+
+		// types 테이블에서 해당 테스트에 연관된 데이터 조회
+		const { data: typesData, error: typesError } = await supabase.from('types').select('*').eq('test_id', testId)
+
+		if (typesError) throw typesError
+
+		// questions 테이블에서 해당 테스트에 연관된 데이터 조회
+		const { data: questionsData, error: questionsError } = await supabase.from('questions').select('*').eq('test_id', testId)
+
+		if (questionsError) throw questionsError
+
+		res.status(200).json({
+			status: 'success',
+			message: '테스트 상세 조회를 성공적으로 가져왔습니다.',
+			test: testData,
+			types: typesData,
+			questions: questionsData,
+		})
+	} catch (err) {
+		console.error('/getTests/:testId Error : ', err)
+		res.status(500).json({
+			status: 'error',
+			message: '상세 조회 중 서버 오류가 발생했습니다.',
+		})
+	}
+})
+
 router.delete('/deleteTest', checkAdminPermission, async (req, res) => {
-	// 테스트 삭제
+	// ---------------------------- 테스트 삭제 ----------------------------
 
 	const { testId } = req.body
 
@@ -399,6 +441,7 @@ router.delete('/deleteTest', checkAdminPermission, async (req, res) => {
 })
 
 router.put('/updateTestPublishState', checkAdminPermission, async (req, res) => {
+	// ---------------------------- 테스트 공개여부 상태 업데이트 ----------------------------
 	const { testId, isPublished } = req.body
 
 	if (!testId || typeof isPublished !== 'boolean' || isPublished === undefined || isPublished === null) {
@@ -423,6 +466,92 @@ router.put('/updateTestPublishState', checkAdminPermission, async (req, res) => 
 		res.status(500).json({
 			status: 'error',
 			message: '테스트 공개 상태 변경 중 서버 오류가 발생했습니다.',
+		})
+	}
+})
+
+router.put('/updateTest/:testId', upload.single('image'), checkAdminPermission, async (req, res) => {
+	// ---------------------------- 테스트 수정 ----------------------------
+	const testId = req.params.testId
+	const { testName, testDescription, types, questions, oldImagePath } = req.body
+	const imageFile = req.file
+
+	if (!testName || !testDescription) {
+		return res.status(400).json({
+			status: 'error',
+			message: '테스트 이름과 설명은 필수입니다.',
+		})
+	}
+
+	if (!types || !Array.isArray(types) || types.length < 2) {
+		return res.status(400).json({
+			status: 'error',
+			message: '적절한 타입 데이터를 제공해주세요. 타입은 최소 2개 이상이어야 합니다.',
+		})
+	}
+
+	if (!questions || !Array.isArray(questions) || questions.length < 4) {
+		return res.status(400).json({
+			status: 'error',
+			message: '질문은 최소 4개 이상이어야 합니다.',
+		})
+	}
+
+	for (const question of questions) {
+		if (!question.content || !Array.isArray(question.types) || question.types.length === 0) {
+			return res.status(400).json({
+				status: 'error',
+				message: '각 질문은 내용과 타입 목록을 가져야 합니다.',
+			})
+		}
+	}
+
+	try {
+		// 기존 이미지 삭제
+		if (oldImagePath) {
+			const { error: deleteError } = await supabase.storage.from('moco-images').remove([oldImagePath])
+			if (deleteError) throw deleteError
+		}
+
+		// 새 이미지 업로드
+		let filePath
+		if (imageFile) {
+			const stream = fs.createReadStream(imageFile.path)
+			filePath = `tests/${imageFile.filename}`
+			const { error: uploadError } = await supabase.storage.from('moco-images').upload(filePath, stream)
+			if (uploadError) throw uploadError
+		}
+
+		// tests 테이블 업데이트
+		const updateData = { name: testName, description: testDescription }
+		if (filePath) updateData.path = filePath
+
+		const { error } = await supabase.from('tests').update(updateData).eq('id', testId)
+		if (error) throw error
+
+		// types 테이블 수정
+		for (const [typeName, description] of Object.entries(types)) {
+			const { error: typeError } = await supabase.from('types').update({ type: typeName, description }).match({ test_id: testId, type: typeName })
+
+			if (typeError) throw typeError
+		}
+
+		// questions 테이블 수정
+		for (const question of questions) {
+			const { error: questionError } = await supabase.from('questions').update(question).match({ test_id: testId, id: question.id })
+
+			if (questionError) throw questionError
+		}
+
+		res.status(200).json({
+			status: 'success',
+			message: '테스트가 성공적으로 수정되었습니다.',
+		})
+	} catch (err) {
+		console.error('/editTest Error : ', err)
+		res.status(500).json({
+			status: 'error',
+			message: '테스트 수정 중 서버 오류가 발생했습니다.',
 		})
 	}
 })
