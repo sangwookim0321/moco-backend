@@ -1,21 +1,8 @@
-const { Client } = require('pg')
+const { createClient } = require('@supabase/supabase-js')
 
-const client = new Client({
-	user: process.env.DB_USER,
-	host: process.env.DB_HOST,
-	database: process.env.DB_DATABASE,
-	password: process.env.DB_PASSWORD,
-	port: process.env.DB_PORT,
-})
+const supabaseUrl = process.env.SUPABASE_URL
+const supabaseServiceRoleKey = process.env.SUPABASE_KEY
 
-client
-	.connect()
-	.then(() => {
-		console.log('Connected to database.')
-	})
-	.catch((err) => {
-		console.log('Error connecting to database.')
-		console.log(err)
-	})
+const supabase = createClient(supabaseUrl, supabaseServiceRoleKey)
 
-module.exports = client
+module.exports = supabase
