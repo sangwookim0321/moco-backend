@@ -657,7 +657,8 @@
           {
             "name": "authorization",
             "in": "header",
-            "type": "string"
+            "type": "string",
+            "required": true
           },
           {
             "name": "page",
@@ -772,6 +773,7 @@
           {
             "name": "authorization",
             "in": "header",
+            "required": true,
             "type": "string"
           },
           {
@@ -881,6 +883,7 @@
           {
             "name": "authorization",
             "in": "header",
+            "required": true,
             "type": "string"
           },
           {
@@ -983,11 +986,13 @@
           {
             "name": "authorization",
             "in": "header",
-            "type": "string"
+            "type": "string",
+            "required": true
           },
           {
             "name": "body",
             "in": "body",
+            "required": true,
             "schema": {
               "type": "object",
               "properties": {
@@ -1100,10 +1105,17 @@
           {
             "name": "authorization",
             "in": "header",
-            "type": "string"
+            "type": "string",
+            "required": true
           },
           {
             "name": "testName",
+            "in": "formData",
+            "type": "string",
+            "required": true
+          },
+          {
+            "name": "testSubName",
             "in": "formData",
             "type": "string",
             "required": true
@@ -1117,20 +1129,22 @@
           {
             "name": "types",
             "in": "formData",
-            "type": "Array",
-            "required": true
+            "type": "string",
+            "required": true,
+            "description": "배열 유형의 JSON 문자열로 보내주세요.(JSON.stringify)"
           },
           {
             "name": "questions",
             "in": "formData",
-            "type": "Array",
-            "required": true
+            "type": "string",
+            "required": true,
+            "description": "배열 유형의 JSON 문자열로 보내주세요.(JSON.stringify)"
           },
           {
             "name": "oldImagePath",
             "in": "formData",
             "type": "string",
-            "required": true
+            "description": "이미지를 변경 할 경우 기존 이미지 path 를 넣어주세요."
           }
         ],
         "responses": {

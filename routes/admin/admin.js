@@ -247,7 +247,7 @@ router.post('/addType', checkAdminPermission, async (req, res) => {
 
 	const { testId, types } = req.body
 
-	if (!testId || !types || typeof types !== 'object' || Object.keys(types).length < 2) {
+	if (!testId || !types || !Array.isArray(types) || types.length < 2) {
 		return res.status(400).json({
 			status: 'error',
 			message: '적절한 타입 데이터를 제공해주세요. 타입은 최소 2개 이상이어야 합니다.',
@@ -255,8 +255,8 @@ router.post('/addType', checkAdminPermission, async (req, res) => {
 	}
 
 	try {
-		// types 객체에서 키-값 쌍을 추출하여 삽입할 데이터 배열 생성
-		const typesData = Object.entries(types).map(([type, description]) => ({
+		// types 배열을 직접 순회하며 각 객체의 필드를 추출
+		const typesData = types.map(({ type, description }) => ({
 			test_id: testId,
 			type: type,
 			description: description,
@@ -410,7 +410,7 @@ router.get('/getTests/:testId', checkAdminPermission, async (req, res) => {
 	}
 })
 
-router.delete('/deleteTest:testId', checkAdminPermission, async (req, res) => {
+router.delete('/deleteTest/:testId', checkAdminPermission, async (req, res) => {
 	// ---------------------------- 테스트 삭제 ----------------------------
 
 	const testId = req.params.testId
@@ -481,10 +481,12 @@ router.put('/updateTestPublishState', checkAdminPermission, async (req, res) => 
 router.put('/updateTest/:testId', upload.single('image'), checkAdminPermission, async (req, res) => {
 	// ---------------------------- 테스트 수정 ----------------------------
 	const testId = req.params.testId
-	const { testName, testDescription, types, questions, oldImagePath } = req.body
+	const types = JSON.parse(req.body.types)
+	const questions = JSON.parse(req.body.questions)
+	const { testName, testSubName, testDescription, oldImagePath } = req.body
 	const imageFile = req.file
 
-	if (!testName || !testDescription || !imageFile) {
+	if (!testName || !testDescription || !testSubName) {
 		return res.status(400).json({
 			status: 'error',
 			message: '필수 항목을 모두 입력해주세요.',
@@ -529,17 +531,18 @@ router.put('/updateTest/:testId', upload.single('image'), checkAdminPermission, 
 			const { error: uploadError } = await supabase.storage.from('moco-images').upload(filePath, stream)
 			if (uploadError) throw uploadError
 		}
-
 		// tests 테이블 업데이트
-		const updateData = { name: testName, description: testDescription }
+		const updateData = { name: testName, subName: testSubName, description: testDescription }
 		if (filePath) updateData.path = filePath
 
 		const { error } = await supabase.from('tests').update(updateData).eq('id', testId)
 		if (error) throw error
 
 		// types 테이블 수정
-		for (const [typeName, description] of Object.entries(types)) {
-			const { error: typeError } = await supabase.from('types').update({ type: typeName, description }).match({ test_id: testId, type: typeName })
+		for (const typeItem of types) {
+			const { id, test_id, type, description } = typeItem
+
+			const { error: typeError } = await supabase.from('types').update({ type, description }).match({ test_id: test_id, id: id })
 
 			if (typeError) throw typeError
 		}

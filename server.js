@@ -18,7 +18,9 @@ app.use(cors())
 app.use('/swagger', swaggerUi.serve, swaggerUi.setup(swaggerFile))
 
 const adminRouter = require('./routes/admin/admin.js')
+const userRouter = require('./routes/user/user.js')
 app.use('/admin', adminRouter)
+app.use('/user', userRouter)
 
 app.listen(PORT, (req, res) => {
 	console.log(`Server is running on port ${PORT}.`)
