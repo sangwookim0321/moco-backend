@@ -410,10 +410,10 @@ router.get('/getTests/:testId', checkAdminPermission, async (req, res) => {
 	}
 })
 
-router.delete('/deleteTest', checkAdminPermission, async (req, res) => {
+router.delete('/deleteTest:testId', checkAdminPermission, async (req, res) => {
 	// ---------------------------- 테스트 삭제 ----------------------------
 
-	const { testId } = req.body
+	const testId = req.params.testId
 
 	if (!testId) {
 		return res.status(400).json({

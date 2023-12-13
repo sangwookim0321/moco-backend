@@ -872,7 +872,7 @@
         }
       }
     },
-    "/deleteTest": {
+    "/deleteTest/{testId}": {
       "delete": {
         "tags": ["테스트 삭제"],
         "summary": "테스트 삭제",
@@ -884,16 +884,10 @@
             "type": "string"
           },
           {
-            "name": "body",
-            "in": "body",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "testId": {
-                  "example": "number"
-                }
-              }
-            }
+            "name": "testId",
+            "in": "path",
+            "required": true,
+            "type": "number"
           }
         ],
         "responses": {
