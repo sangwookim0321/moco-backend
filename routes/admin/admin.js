@@ -106,13 +106,13 @@ router.post('/login', async (req, res) => {
 		const { data: userData, error } = await supabase.from('accounts').select('id, role, username, email, password').eq('email', email).single()
 
 		if (error || !userData) {
-			return res.status(401).json({ message: '사용자를 찾을 수 없습니다' })
+			return res.status(401).json({ status: 'error', message: '사용자를 찾을 수 없습니다.' })
 		}
 
 		// 비밀번호 검증
 		const isValid = await bcrypt.compare(password, userData.password)
 		if (!isValid) {
-			return res.status(401).json({ message: '비밀번호가 일치하지 않습니다.' })
+			return res.status(402).json({ status: 'error', message: '비밀번호가 일치하지 않습니다.' })
 		}
 
 		// JWT 토큰 생성
@@ -123,11 +123,13 @@ router.post('/login', async (req, res) => {
 		return res.status(201).json({
 			status: 'success',
 			message: '로그인 성공',
-			accessToken,
-			refreshToken,
-			role: userData.role,
-			username: userData.username,
-			email: userData.email,
+			result: {
+				accessToken,
+				refreshToken,
+				role: userData.role,
+				username: userData.username,
+				email: userData.email,
+			},
 		})
 	} catch (err) {
 		console.error('/login Error : ', err)
@@ -183,22 +185,26 @@ router.post('/refreshToken', async (req, res) => {
 
 		return res.status(201).json({
 			status: 'success',
-			message: '토큰이 갱신되었습니다.',
-			accessToken,
+			message: '토큰이 성공적으로 재발급되었습니다.',
+			result: { accessToken },
 		})
 	} catch (err) {
 		console.error('/refreshToken Error: ', err)
-		res.status(401).json({ status: 'error', message: '리프레시 토큰이 유효하지 않습니다.' })
+		if (err instanceof jwt.JsonWebTokenError) {
+			res.status(401).json({ status: 'error', message: '리프레시 토큰이 유효하지 않습니다.' })
+		} else {
+			res.status(500).json({ status: 'error', message: '토큰 재발급 중 서버 오류가 발생했습니다.' })
+		}
 	}
 })
 
 router.post('/addTest', upload.single('image'), checkAdminPermission, async (req, res) => {
 	// ---------------------------- 테스트 생성 ----------------------------
 
-	const { testName, testDescription } = req.body
+	const { testName, testSubName, testDescription } = req.body
 	const imageFile = req.file
 
-	if (!testName || !testDescription || !imageFile) {
+	if (!testName || !testSubName || !testDescription || !imageFile) {
 		return res.status(400).json({
 			status: 'error',
 			message: '필수 항목을 모두 입력해주세요.',
@@ -216,7 +222,7 @@ router.post('/addTest', upload.single('image'), checkAdminPermission, async (req
 		let created_at = new Date()
 
 		// Supabase를 사용하여 psych_tests.Tests 테이블에 새로운 테스트 추가
-		const { data, error } = await supabase.from('tests').insert({ name: testName, description: testDescription, is_published: false, path: filePath, created_at }).select()
+		const { data, error } = await supabase.from('tests').insert({ name: testName, subName: testSubName, description: testDescription, is_published: false, path: filePath, created_at }).select()
 
 		if (error) {
 			throw error
@@ -252,7 +258,7 @@ router.post('/addType', checkAdminPermission, async (req, res) => {
 		// types 객체에서 키-값 쌍을 추출하여 삽입할 데이터 배열 생성
 		const typesData = Object.entries(types).map(([type, description]) => ({
 			test_id: testId,
-			type_name: type,
+			type: type,
 			description: description,
 		}))
 
@@ -389,9 +395,11 @@ router.get('/getTests/:testId', checkAdminPermission, async (req, res) => {
 		res.status(200).json({
 			status: 'success',
 			message: '테스트 상세 조회를 성공적으로 가져왔습니다.',
-			test: testData,
-			types: typesData,
-			questions: questionsData,
+			result: {
+				test: testData,
+				types: typesData,
+				questions: questionsData,
+			},
 		})
 	} catch (err) {
 		console.error('/getTests/:testId Error : ', err)
@@ -460,7 +468,7 @@ router.put('/updateTestPublishState', checkAdminPermission, async (req, res) => 
 
 		res.status(200).json({
 			status: 'success',
-			message: '테스트 공개 상태가 성공적으로 변경되었습니다.',
+			message: '테스트 공개 여부가 성공적으로 수정되었습니다.',
 		})
 	} catch (err) {
 		res.status(500).json({
@@ -552,6 +560,28 @@ router.put('/updateTest/:testId', upload.single('image'), checkAdminPermission, 
 		res.status(500).json({
 			status: 'error',
 			message: '테스트 수정 중 서버 오류가 발생했습니다.',
+		})
+	}
+})
+
+router.get('/getAdmins', checkAdminPermission, async (req, res) => {
+	// ---------------------------- 관리자 목록 조회 ----------------------------
+	try {
+		const { data, error } = await supabase.from('accounts').select('id, role, username, phone, email').or('role.eq.1, role.eq.2')
+
+		if (error) {
+			throw error
+		}
+
+		res.status(200).json({
+			status: 'success',
+			message: '관리자 목록을 성공적으로 가져왔습니다.',
+			result: data,
+		})
+	} catch (err) {
+		res.status(500).json({
+			status: 'error',
+			message: '관리자 목록 조회 중 서버 오류가 발생했습니다.',
 		})
 	}
 })
