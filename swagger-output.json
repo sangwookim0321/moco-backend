@@ -354,7 +354,7 @@
       "post": {
         "tags": ["테스트 추가"],
         "summary": "테스트 생성",
-        "description": "테스트 생성 api 입니다. addTest, addType, addQuestion 순서대로 호출해야 합니다.",
+        "description": "테스트 생성 api 입니다. addTest, addType, addQuestion 순서대로 호출해야 합니다. \n 예시 코드 피그마 Admin-Panel-01 참조",
         "parameters": [
           {
             "name": "authorization",
@@ -1094,7 +1094,7 @@
       "put": {
         "tags": ["테스트 수정"],
         "summary": "테스트 수정",
-        "description": "",
+        "description": "예시 코드 피그마 Admin-Panel-05 참조",
         "parameters": [
           {
             "name": "testId",
@@ -1541,10 +1541,10 @@
       }
     },
     "/user/getTestResult/:testId": {
-      "get": {
+      "post": {
         "tags": ["사용자"],
         "summary": "테스트 결과 조회",
-        "description": "가장 많이 선택된 type 의 row 행을 반환",
+        "description": "가장 많이 선택된 type 의 row 행을 반환, 동일하게 (ex: [개, 개, 고양이, 사자, 고양이]) 선택될 경우 다중 행 반환 (개, 고양이) \n 결과 조회 후에 /user/saveResult 테스트 결과 저장을 호출 해야합니다.",
         "parameters": [
           {
             "name": "testId",
@@ -1630,7 +1630,7 @@
       "get": {
         "tags": ["사용자"],
         "summary": "테스트 결과 저장",
-        "description": "사용자의 테스트 결과 저장",
+        "description": "사용자의 테스트 결과 저장 \n /user/getTestResult/:testId 테스트 결과 조회 후에 호출 해야합니다.",
         "parameters": [
           {
             "name": "body",
@@ -1639,14 +1639,14 @@
             "schema": {
               "type": "object",
               "properties": {
+                "testId": {
+                  "example": "number"
+                },
                 "type": {
                   "example": "string"
                 },
                 "description": {
                   "example": "string"
-                },
-                "testId": {
-                  "example": "number"
                 }
               }
             }

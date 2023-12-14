@@ -94,7 +94,7 @@ router.get('/getTests/:testId', async (req, res) => {
 	}
 })
 
-router.get('/getTestResult/:testId', async (req, res) => {
+router.post('/getTestResult/:testId', async (req, res) => {
 	// ---------------------------- 테스트 결과 조회 ----------------------------
 	if (!req.params.testId) {
 		return res.status(400).json({
@@ -114,29 +114,33 @@ router.get('/getTestResult/:testId', async (req, res) => {
 		const testId = req.params.testId
 		const types = req.body.types
 
-		const result = types.reduce(
-			(acc, val) => {
-				acc[val] = (acc[val] || 0) + 1
-				if (acc[val] > acc.count) {
-					acc.mostFrequent = val
-					acc.count = acc[val]
-				}
-				return acc
-			},
-			{ mostFrequent: null, count: 0 }
-		).mostFrequent
+		// 각 타입의 출현 횟수 계산
+		const frequencyMap = types.reduce((acc, val) => {
+			acc[val] = (acc[val] || 0) + 1
+			return acc
+		}, {})
 
-		console.log(result)
+		// 가장 높은 출현 횟수 찾기
+		const maxCount = Math.max(...Object.values(frequencyMap))
 
-		// types 테이블에서 result(가장 많이 선택된 타입) 과 test_id 가 일치하는 데이터 조회
-		const { data, error } = await supabase.from('types').select('*').eq('type', result).eq('test_id', testId)
+		// 가장 높은 출현 횟수를 가진 타입들 찾기
+		const mostFrequent = Object.keys(frequencyMap).filter((key) => frequencyMap[key] === maxCount)
 
-		if (error) throw error
+		console.log(mostFrequent)
+
+		// 가장 많이 출현한 타입에 해당하는 데이터 조회
+		const datas = await Promise.all(
+			mostFrequent.map(async (type) => {
+				const { data, error } = await supabase.from('types').select('*').eq('type', type).eq('test_id', testId)
+				if (error) throw error
+				return data
+			})
+		)
 
 		res.status(200).json({
 			status: 'success',
 			message: '테스트 결과 조회를 성공적으로 가져왔습니다.',
-			result: data,
+			result: datas.flat(),
 		})
 	} catch (err) {
 		console.error('/getTestResult/:testId Error : ', err)
