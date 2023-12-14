@@ -1528,7 +1528,7 @@
         }
       }
     },
-    "/user/getTests/:testId": {
+    "/user/getTests/{testId}": {
       "get": {
         "tags": ["사용자"],
         "summary": "테스트 상세 조회",
@@ -1662,7 +1662,7 @@
         }
       }
     },
-    "/user/getTestResult/:testId": {
+    "/user/getTestResult/{testId}": {
       "post": {
         "tags": ["사용자"],
         "summary": "테스트 결과 조회",
