@@ -1642,11 +1642,11 @@
                 "testId": {
                   "example": "number"
                 },
-                "type": {
-                  "example": "string"
+                "types": {
+                  "example": []
                 },
-                "description": {
-                  "example": "string"
+                "descriptions": {
+                  "example": []
                 }
               }
             }

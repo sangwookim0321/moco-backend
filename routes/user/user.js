@@ -168,26 +168,29 @@ router.post('/saveResult', async (req, res) => {
 			message: '테스트 결과를 제공해주세요.',
 		})
 	}
-
+	console.log(req.body)
 	try {
-		const { testId, type, description } = req.body
+		const { testId, types, descriptions } = req.body
 
 		// 테스트 결과 저장을 위한 추가 정보 조회
 		const { data: testData, error: testError } = await supabase.from('tests').select('name').eq('id', testId).single()
 
 		if (testError) throw { stage: 'tests', error: testError }
 
-		const saveResult = {
-			test_id: testId,
-			name: testData.name,
-			type: type,
-			description: description,
+		// types와 descriptions 배열의 각 요소를 순차적으로 삽입
+		for (let i = 0; i < types.length; i++) {
+			const type = types[i]
+			const description = descriptions[i]
+
+			const { error: saveError } = await supabase.from('result').insert({
+				test_id: testId,
+				name: testData.name,
+				type: type,
+				description: description,
+			})
+
+			if (saveError) throw saveError // 삽입 중 발생하는 첫 번째 에러에서 루프 중단
 		}
-
-		// result 테이블에 테스트 결과 저장
-		const { error: saveError } = await supabase.from('result').insert([saveResult])
-
-		if (saveError) throw { stage: 'result', error: saveError }
 
 		res.status(200).json({
 			status: 'success',
