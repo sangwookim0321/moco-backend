@@ -13,7 +13,7 @@
   "paths": {
     "/admin/createAdmin": {
       "post": {
-        "tags": ["관리자"],
+        "tags": ["관리자 기능"],
         "summary": "관리자 생성",
         "description": "role = 1 슈퍼관리자만 사용 가능",
         "parameters": [
@@ -114,9 +114,106 @@
         }
       }
     },
+    "/admin/statistics": {
+      "get": {
+        "tags": ["관리자 기능"],
+        "summary": "관리자 테스트 통계",
+        "description": "해당 테스트(id) 의 통계(count) 를 조회 합니다. totalCount (총 이용횟수) 가 같이 내려갑니다.",
+        "parameters": [
+          {
+            "name": "testId",
+            "in": "query",
+            "type": "string",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "example": "success",
+                  "type": "string"
+                },
+                "message": {
+                  "example": "테스트 통계 조회를 성공적으로 가져왔습니다.",
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "example": "error",
+                  "type": "string"
+                },
+                "message": {
+                  "example": "테스트 ID를 제공해주세요.",
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "example": "error",
+                  "type": "string"
+                },
+                "message": {
+                  "example": "유효하지 않은 토큰 입니다.",
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "example": "error",
+                  "type": "string"
+                },
+                "message": {
+                  "example": "권한이 없습니다..",
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "example": "error",
+                  "type": "string"
+                },
+                "message": {
+                  "example": "테스트 통계 조회 중 서버 오류가 발생했습니다.",
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/admin/login": {
       "post": {
-        "tags": ["인증"],
+        "tags": ["관리자 인증"],
         "summary": "인증",
         "description": "",
         "parameters": [
@@ -232,7 +329,7 @@
     },
     "/admin/logout": {
       "post": {
-        "tags": ["인증"],
+        "tags": ["관리자 인증"],
         "summary": "로그아웃",
         "description": "로그아웃",
         "parameters": [
@@ -260,7 +357,7 @@
     },
     "/admin/refreshToken": {
       "post": {
-        "tags": ["인증"],
+        "tags": ["관리자 인증"],
         "summary": "토큰 재발급",
         "description": "",
         "parameters": [
@@ -352,7 +449,7 @@
     },
     "/admin/addTest": {
       "post": {
-        "tags": ["테스트 추가"],
+        "tags": ["관리자 테스트 추가"],
         "summary": "테스트 생성",
         "description": "테스트 생성 api 입니다. addTest, addType, addQuestion 순서대로 호출해야 합니다. \n 예시 코드 피그마 Admin-Panel-01 참조",
         "parameters": [
@@ -469,7 +566,7 @@
     },
     "/admin/addType": {
       "post": {
-        "tags": ["테스트 추가"],
+        "tags": ["관리자 테스트 추가"],
         "summary": "테스트 타입 생성",
         "description": "테스트 타입 추가",
         "parameters": [
@@ -559,7 +656,7 @@
     },
     "/admin/addQuestion": {
       "post": {
-        "tags": ["테스트 추가"],
+        "tags": ["관리자 테스트 추가"],
         "summary": "테스트 질문 생성",
         "description": "테스트 질문 추가",
         "parameters": [
@@ -650,9 +747,9 @@
     },
     "/admin/getTests": {
       "get": {
-        "tags": ["테스트 조회"],
+        "tags": ["관리자 테스트 조회"],
         "summary": "테스트 목록 조회",
-        "description": "",
+        "description": "total: 전체 테스트 수, totalCount: 이용횟수",
         "parameters": [
           {
             "name": "authorization",
@@ -669,6 +766,17 @@
             "name": "limit",
             "in": "query",
             "type": "string"
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "type": "string",
+            "description": "NEWEST(최신순), OLDEST(오래된순), MOST_POPULAR(인기순), LEAST_POPULAR(비인기순)"
           }
         ],
         "responses": {
@@ -709,6 +817,10 @@
                       "created_at": "string"
                     }
                   ]
+                },
+                "totalCount": {
+                  "example": "number",
+                  "type": "number"
                 }
               }
             }
@@ -766,7 +878,7 @@
     },
     "/admin/getTests/{testId}": {
       "get": {
-        "tags": ["테스트 조회"],
+        "tags": ["관리자 테스트 조회"],
         "summary": "테스트 상세 조회",
         "description": "",
         "parameters": [
@@ -876,7 +988,7 @@
     },
     "/admin/deleteTest/{testId}": {
       "delete": {
-        "tags": ["테스트 삭제"],
+        "tags": ["관리자 테스트 삭제"],
         "summary": "테스트 삭제",
         "description": "",
         "parameters": [
@@ -979,7 +1091,7 @@
     },
     "/admin/updateTestPublishState": {
       "put": {
-        "tags": ["테스트 수정"],
+        "tags": ["관리자 테스트 수정"],
         "summary": "테스트 공개 여부 수정",
         "description": "",
         "parameters": [
@@ -1092,7 +1204,7 @@
     },
     "/admin/updateTest/{testId}": {
       "put": {
-        "tags": ["테스트 수정"],
+        "tags": ["관리자 테스트 수정"],
         "summary": "테스트 수정",
         "description": "예시 코드 피그마 Admin-Panel-05 참조",
         "parameters": [
@@ -1233,7 +1345,7 @@
     },
     "/admin/getAdmins": {
       "get": {
-        "tags": ["관리자"],
+        "tags": ["관리자 기능"],
         "summary": "관리자 목록 조회",
         "description": "",
         "parameters": [
@@ -1327,13 +1439,8 @@
       "get": {
         "tags": ["사용자"],
         "summary": "테스트 목록 조회",
-        "description": "인증 정보가 필요없는 테스트 목록 조회",
+        "description": "인증 정보가 필요없는 테스트 목록 조회 \n total: 전체 테스트 수, totalCount: 이용횟수",
         "parameters": [
-          {
-            "name": "search",
-            "in": "query",
-            "type": "string"
-          },
           {
             "name": "page",
             "in": "query",
@@ -1343,6 +1450,17 @@
             "name": "limit",
             "in": "query",
             "type": "string"
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "type": "string",
+            "description": "NEWEST(최신순), OLDEST(오래된순), MOST_POPULAR(인기순), LEAST_POPULAR(비인기순)"
           }
         ],
         "responses": {
@@ -1383,6 +1501,10 @@
                       "created_at": "string"
                     }
                   ]
+                },
+                "totalCount": {
+                  "example": "number",
+                  "type": "number"
                 }
               }
             }

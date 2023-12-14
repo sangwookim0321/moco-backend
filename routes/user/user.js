@@ -29,6 +29,7 @@ router.get('/getTests', async (req, res) => {
 	const page = parseInt(req.query.page) || 1
 	const limit = parseInt(req.query.limit) || 10
 	const offset = (page - 1) * limit
+	const sort = req.query.sort || ''
 
 	try {
 		// Supabase를 사용하여 테스트 목록 페이징하여 조회
@@ -36,6 +37,24 @@ router.get('/getTests', async (req, res) => {
 
 		if (search) {
 			query = query.ilike('name', `%${search}%`)
+		}
+
+		// 정렬 적용
+		switch (sort) {
+			case 'NEWEST':
+				query = query.order('created_at', { ascending: false })
+				break
+			case 'OLDEST':
+				query = query.order('created_at', { ascending: true })
+				break
+			case 'MOST_POPULAR':
+				query = query.order('totalCount', { ascending: false })
+				break
+			case 'LEAST_POPULAR':
+				query = query.order('totalCount', { ascending: true })
+				break
+			default:
+				query = query.order('id', { ascending: true })
 		}
 
 		const { data, error, count } = await query.range(offset, offset + limit - 1)
@@ -230,7 +249,7 @@ router.post('/saveResult', async (req, res) => {
 			}
 		}
 
-		updateTotalCount(testId)
+		await updateTotalCount(testId)
 
 		res.status(200).json({
 			status: 'success',
@@ -277,7 +296,7 @@ router.get('/statistics', async (req, res) => {
 			result: resultData,
 		})
 	} catch (err) {
-		console.error('/statistics Error : ', err)
+		console.error('/user/statistics Error : ', err)
 
 		res.status(500).json({
 			status: 'error',

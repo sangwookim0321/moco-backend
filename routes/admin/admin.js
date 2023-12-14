@@ -337,12 +337,31 @@ router.get('/getTests', checkAdminPermission, async (req, res) => {
 	const page = parseInt(req.query.page) || 1
 	const limit = parseInt(req.query.limit) || 10
 	const offset = (page - 1) * limit
+	const sort = req.query.sort || ''
 
 	try {
 		let query = supabase.from('tests').select('*', { count: 'exact' })
 
 		if (search) {
 			query = query.ilike('name', `%${search}%`)
+		}
+
+		// 정렬 적용
+		switch (sort) {
+			case 'NEWEST':
+				query = query.order('created_at', { ascending: false })
+				break
+			case 'OLDEST':
+				query = query.order('created_at', { ascending: true })
+				break
+			case 'MOST_POPULAR':
+				query = query.order('totalCount', { ascending: false })
+				break
+			case 'LEAST_POPULAR':
+				query = query.order('totalCount', { ascending: true })
+				break
+			default:
+				query = query.order('id', { ascending: true })
 		}
 
 		// Supabase를 사용하여 테스트 목록 페이징하여 조회
@@ -589,6 +608,53 @@ router.get('/getAdmins', checkAdminPermission, async (req, res) => {
 		res.status(500).json({
 			status: 'error',
 			message: '관리자 목록 조회 중 서버 오류가 발생했습니다.',
+		})
+	}
+})
+
+router.get('/statistics', checkAdminPermission, async (req, res) => {
+	// ---------------------------- 테스트 통계 조회 ----------------------------
+
+	if (!req.query.testId) {
+		return res.status(400).json({
+			status: 'error',
+			message: '테스트 ID를 제공해주세요.',
+		})
+	}
+
+	try {
+		const testId = req.query.testId
+
+		const { data: resultData, error: resultError } = await supabase.from('result').select('*').eq('test_id', testId)
+
+		if (resultError) throw { stage: 'result', error: resultError }
+
+		const { data: testData, error: testError } = await supabase.from('tests').select('totalCount').eq('id', testId)
+
+		if (testError) throw { stage: 'tests', error: testError }
+
+		res.status(200).json({
+			status: 'success',
+			message: '테스트 통계 조회를 성공적으로 가져왔습니다.',
+			result: {
+				resultData,
+				testData: testData ? testData : { totalCount: 0 },
+			},
+		})
+	} catch (err) {
+		console.error('/admin/statistics Error : ', err)
+
+		let errorMessage = '테스트 통계 조회 중 서버 오류가 발생했습니다.'
+
+		if (err.stage === 'tests') {
+			errorMessage = '테스트 정보를 가져오는 중 서버 오류가 발생했습니다.'
+		} else if (err.stage === 'result') {
+			errorMessage = '테스트 결과를 가져오는 중 서버 오류가 발생했습니다.'
+		}
+
+		res.status(500).json({
+			status: 'error',
+			message: errorMessage,
 		})
 	}
 })
