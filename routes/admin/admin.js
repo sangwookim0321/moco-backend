@@ -333,16 +333,20 @@ router.post('/addQuestion', checkAdminPermission, async (req, res) => {
 router.get('/getTests', checkAdminPermission, async (req, res) => {
 	// ---------------------------- 테스트 목록 조회 ----------------------------
 
+	const search = req.query.search || ''
 	const page = parseInt(req.query.page) || 1
 	const limit = parseInt(req.query.limit) || 10
 	const offset = (page - 1) * limit
 
 	try {
+		let query = supabase.from('tests').select('*', { count: 'exact' })
+
+		if (search) {
+			query = query.ilike('name', `%${search}%`)
+		}
+
 		// Supabase를 사용하여 테스트 목록 페이징하여 조회
-		const { data, error, count } = await supabase
-			.from('tests')
-			.select('*', { count: 'exact' })
-			.range(offset, offset + limit - 1)
+		const { data, error, count } = await query.range(offset, offset + limit - 1)
 
 		if (error) {
 			throw error
@@ -405,7 +409,7 @@ router.get('/getTests/:testId', checkAdminPermission, async (req, res) => {
 		console.error('/getTests/:testId Error : ', err)
 		res.status(500).json({
 			status: 'error',
-			message: '상세 조회 중 서버 오류가 발생했습니다.',
+			message: '테스트 상세 조회 중 서버 오류가 발생했습니다.',
 		})
 	}
 })
