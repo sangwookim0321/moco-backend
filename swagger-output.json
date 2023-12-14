@@ -1703,6 +1703,71 @@
           }
         }
       }
+    },
+    "/user/statistics": {
+      "get": {
+        "tags": ["사용자"],
+        "summary": "테스트 통계",
+        "description": "해당 테스트(id) 의 통계(count) 를 조회 합니다. \n 만약 결과 페이지에서 다른 사람들은 어떤 결과가 나왔는지 통계를 보여주고 싶을때 사용 하면 됩니다.",
+        "parameters": [
+          {
+            "name": "testId",
+            "in": "query",
+            "type": "string",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "example": "success",
+                  "type": "string"
+                },
+                "message": {
+                  "example": "테스트 통계 조회를 성공적으로 가져왔습니다.",
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "OK",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "example": "error",
+                  "type": "string"
+                },
+                "message": {
+                  "example": "테스트 ID를 제공해주세요.",
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "example": "error",
+                  "type": "string"
+                },
+                "message": {
+                  "example": "테스트 통계 조회 중 서버 오류가 발생했습니다.",
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   }
 }

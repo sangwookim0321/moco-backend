@@ -2,6 +2,27 @@ const express = require('express')
 const router = express.Router()
 const supabase = require('../../models/db.js')
 
+async function updateTotalCount(testId) {
+	try {
+		// result 테이블에서 count의 총합 계산
+		const { data: countData, error: countError } = await supabase.from('result').select('count').eq('test_id', testId)
+
+		if (countError) throw countError
+
+		const totalCount = countData.reduce((acc, row) => acc + row.count, 0)
+
+		// tests 테이블의 totalCount 업데이트
+		const { error: updateError } = await supabase.from('tests').update({ totalCount: totalCount }).eq('id', testId)
+
+		if (updateError) throw updateError
+
+		return 'Total count updated successfully'
+	} catch (error) {
+		console.error('Error updating total count:', error)
+		throw error
+	}
+}
+
 router.get('/getTests', async (req, res) => {
 	//  ------------------------- 사용자 테스트 목록 가져오기 -------------------------
 	const search = req.query.search || ''
@@ -182,15 +203,34 @@ router.post('/saveResult', async (req, res) => {
 			const type = types[i]
 			const description = descriptions[i]
 
-			const { error: saveError } = await supabase.from('result').insert({
-				test_id: testId,
-				name: testData.name,
-				type: type,
-				description: description,
-			})
+			// 기존 데이터 확인
+			const { data: existingData, error: existingError } = await supabase.from('result').select('id, count').eq('test_id', testId).eq('type', type).eq('description', description).single()
 
-			if (saveError) throw saveError // 삽입 중 발생하는 첫 번째 에러에서 루프 중단
+			if (existingError && existingError.message !== 'No rows found') throw existingError
+
+			if (existingData) {
+				// 기존 데이터가 있는 경우, count 업데이트
+				const { error: updateError } = await supabase
+					.from('result')
+					.update({ count: existingData.count + 1 })
+					.eq('id', existingData.id)
+
+				if (updateError) throw updateError
+			} else {
+				// 새로운 데이터 삽입
+				const { error: insertError } = await supabase.from('result').insert({
+					test_id: testId,
+					name: testData.name,
+					type: type,
+					description: description,
+					count: 1,
+				})
+
+				if (insertError) throw insertError
+			}
 		}
+
+		updateTotalCount(testId)
 
 		res.status(200).json({
 			status: 'success',
@@ -210,6 +250,38 @@ router.post('/saveResult', async (req, res) => {
 		res.status(500).json({
 			status: 'error',
 			message: errorMessage,
+		})
+	}
+})
+
+router.get('/statistics', async (req, res) => {
+	// ---------------------------- 테스트 통계 조회 ----------------------------
+
+	if (!req.query.testId) {
+		return res.status(400).json({
+			status: 'error',
+			message: '테스트 ID를 제공해주세요.',
+		})
+	}
+
+	try {
+		const testId = req.query.testId
+
+		const { data: resultData, error: resultError } = await supabase.from('result').select('*').eq('test_id', testId)
+
+		if (resultError) throw resultError
+
+		res.status(200).json({
+			status: 'success',
+			message: '테스트 통계 조회를 성공적으로 가져왔습니다.',
+			result: resultData,
+		})
+	} catch (err) {
+		console.error('/statistics Error : ', err)
+
+		res.status(500).json({
+			status: 'error',
+			message: '테스트 통계 조회 중 서버 오류가 발생했습니다.',
 		})
 	}
 })
