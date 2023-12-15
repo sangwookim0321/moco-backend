@@ -649,7 +649,7 @@ router.get('/statisticsDetail', checkAdminPermission, async (req, res) => {
 	try {
 		const testId = req.query.testId
 
-		const { data: resultData, error: resultError } = await supabase.from('result').select('*').eq('test_id', testId)
+		const { data: resultData, error: resultError } = await supabase.from('result').select('id, test_id, type, description, count').eq('test_id', testId)
 
 		if (resultError) throw { stage: 'result', error: resultError }
 
@@ -662,7 +662,7 @@ router.get('/statisticsDetail', checkAdminPermission, async (req, res) => {
 			message: '테스트 통계 조회를 성공적으로 가져왔습니다.',
 			result: {
 				resultData,
-				testData: testData ? testData : { totalCount: 0 },
+				totalCount: testData ? testData : { totalCount: 0 },
 			},
 		})
 	} catch (err) {

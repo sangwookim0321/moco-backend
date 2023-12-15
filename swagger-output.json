@@ -158,7 +158,7 @@
                         "count": "number"
                       }
                     ],
-                    "testData": "number"
+                    "totalCount": "number"
                   }
                 }
               }
