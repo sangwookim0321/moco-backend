@@ -612,7 +612,31 @@ router.get('/getAdmins', checkAdminPermission, async (req, res) => {
 	}
 })
 
-router.get('/statistics', checkAdminPermission, async (req, res) => {
+router.get('/statisticsList', checkAdminPermission, async (req, res) => {
+	// ---------------------------- 테스트 통계 목록 조회 ----------------------------
+
+	try {
+		const { data, error } = await supabase.from('tests').select('id, name, path, totalCount').gt('totalCount', 0)
+
+		if (error) {
+			throw error
+		}
+
+		res.status(200).json({
+			status: 'success',
+			message: '테스트 통계 목록을 성공적으로 가져왔습니다.',
+			result: data,
+		})
+	} catch (err) {
+		console.error('/statisticsList Error : ', err)
+		res.status(500).json({
+			status: 'error',
+			message: '테스트 통계 목록 조회 중 서버 오류가 발생했습니다.',
+		})
+	}
+})
+
+router.get('/statisticsDetail', checkAdminPermission, async (req, res) => {
 	// ---------------------------- 테스트 통계 조회 ----------------------------
 
 	if (!req.query.testId) {
@@ -642,7 +666,7 @@ router.get('/statistics', checkAdminPermission, async (req, res) => {
 			},
 		})
 	} catch (err) {
-		console.error('/admin/statistics Error : ', err)
+		console.error('/admin/statisticsDetail Error : ', err)
 
 		let errorMessage = '테스트 통계 조회 중 서버 오류가 발생했습니다.'
 
