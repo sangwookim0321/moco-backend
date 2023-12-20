@@ -23,7 +23,7 @@ async function updateTotalCount(testId) {
 	}
 }
 
-router.get('/getTests', async (req, res) => {
+router.get('/tests', async (req, res) => {
 	//  ------------------------- 사용자 테스트 목록 가져오기 -------------------------
 	const search = req.query.search || ''
 	const page = parseInt(req.query.page) || 1
@@ -79,7 +79,7 @@ router.get('/getTests', async (req, res) => {
 	}
 })
 
-router.get('/getTests/:testId', async (req, res) => {
+router.get('/tests/:testId', async (req, res) => {
 	// ---------------------------- 테스트 상세 조회 ----------------------------
 	if (!req.params.testId) {
 		return res.status(400).json({
@@ -134,7 +134,7 @@ router.get('/getTests/:testId', async (req, res) => {
 	}
 })
 
-router.post('/getTestResult/:testId', async (req, res) => {
+router.post('/testResult/:testId', async (req, res) => {
 	// ---------------------------- 테스트 결과 조회 ----------------------------
 	if (!req.params.testId) {
 		return res.status(400).json({

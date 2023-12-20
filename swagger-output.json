@@ -574,307 +574,9 @@
         }
       }
     },
-    "/admin/addTest": {
-      "post": {
-        "tags": ["관리자 테스트 추가"],
-        "summary": "테스트 생성",
-        "description": "테스트 생성 api 입니다. addTest, addType, addQuestion 순서대로 호출해야 합니다. \n 예시 코드 피그마 Admin-Panel-01 참조",
-        "parameters": [
-          {
-            "name": "authorization",
-            "in": "header",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "name": "testName",
-            "in": "formData",
-            "type": "string",
-            "required": true
-          },
-          {
-            "name": "testSubName",
-            "in": "formData",
-            "type": "string",
-            "required": true
-          },
-          {
-            "name": "testDescription",
-            "in": "formData",
-            "type": "string",
-            "required": true
-          },
-          {
-            "name": "imageFile",
-            "in": "formData",
-            "type": "binary",
-            "required": true
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": "Created",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "result": {
-                  "example": {
-                    "id": "number",
-                    "name": "string",
-                    "description": "string",
-                    "is_published": "boolean",
-                    "subName": "string",
-                    "path": "string",
-                    "created_at": "string"
-                  },
-                  "type": "object"
-                },
-                "status": {
-                  "example": "success",
-                  "type": "string"
-                },
-                "message": {
-                  "example": "테스트가 성공적으로 추가되었습니다.",
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "status": {
-                  "example": "error",
-                  "type": "string"
-                },
-                "message": {
-                  "example": "필수 항목을 모두 입력해주세요.",
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "status": {
-                  "example": "error",
-                  "type": "string"
-                },
-                "message": {
-                  "example": "권한이 없습니다.",
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal Server Error",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "status": {
-                  "example": "error",
-                  "type": "string"
-                },
-                "message": {
-                  "example": "테스트 추가 중 서버 오류가 발생했습니다.",
-                  "type": "string"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/admin/addType": {
-      "post": {
-        "tags": ["관리자 테스트 추가"],
-        "summary": "테스트 타입 생성",
-        "description": "테스트 타입 추가",
-        "parameters": [
-          {
-            "name": "authorization",
-            "in": "header",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "type": "object",
-              "properties": {
-                "testId": {
-                  "example": "number",
-                  "type": "number",
-                  "required": true
-                },
-                "types": {
-                  "example": [
-                    {
-                      "type": "String",
-                      "description": "String"
-                    }
-                  ],
-                  "type": "array",
-                  "required": true
-                }
-              }
-            }
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": "Created",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "status": {
-                  "example": "success",
-                  "type": "string"
-                },
-                "message": {
-                  "example": "타입이 성공적으로 추가되었습니다.",
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "status": {
-                  "example": "error",
-                  "type": "string"
-                },
-                "message": {
-                  "example": "적절한 타입 데이터를 제공해주세요. 타입은 최소 2개 이상이어야 합니다.",
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal Server Error",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "status": {
-                  "example": "error",
-                  "type": "string"
-                },
-                "message": {
-                  "example": "타입 추가 중 서버 오류가 발생했습니다.",
-                  "type": "string"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/admin/addQuestion": {
-      "post": {
-        "tags": ["관리자 테스트 추가"],
-        "summary": "테스트 질문 생성",
-        "description": "테스트 질문 추가",
-        "parameters": [
-          {
-            "name": "authorization",
-            "in": "header",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "type": "object",
-              "properties": {
-                "testId": {
-                  "example": "number",
-                  "type": "number",
-                  "required": true
-                },
-                "questions": {
-                  "example": [
-                    {
-                      "content": "String",
-                      "types": []
-                    }
-                  ]
-                }
-              }
-            }
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": "Created",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "status": {
-                  "example": "success",
-                  "type": "string"
-                },
-                "message": {
-                  "example": "질문이 성공적으로 추가되었습니다.",
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "status": {
-                  "example": "error",
-                  "type": "string"
-                },
-                "message": {
-                  "example": [
-                    "질문은 최소 4개 이상이어야 합니다.",
-                    "각 질문은 내용과 타입 목록을 가져야 합니다."
-                  ],
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal Server Error",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "status": {
-                  "example": "error",
-                  "type": "string"
-                },
-                "message": {
-                  "example": "질문 추가 중 서버 오류가 발생했습니다.",
-                  "type": "string"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/admin/getTests": {
+    "/admin/tests": {
       "get": {
-        "tags": ["관리자 테스트 조회"],
+        "tags": ["관리자 테스트"],
         "summary": "테스트 목록 조회",
         "description": "total: 전체 테스트 수, totalCount: 이용횟수",
         "parameters": [
@@ -1001,11 +703,156 @@
             }
           }
         }
+      },
+      "post": {
+        "tags": ["관리자 테스트"],
+        "summary": "테스트 생성",
+        "description": "테스트 생성 api 입니다.",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "testName",
+            "in": "formData",
+            "type": "string",
+            "required": true
+          },
+          {
+            "name": "testSubName",
+            "in": "formData",
+            "type": "string",
+            "required": true
+          },
+          {
+            "name": "testDescription",
+            "in": "formData",
+            "type": "string",
+            "required": true
+          },
+          {
+            "name": "imageFile",
+            "in": "formData",
+            "type": "binary",
+            "required": true
+          },
+          {
+            "name": "types",
+            "in": "formData",
+            "type": "string",
+            "required": true,
+            "description": "배열 유형의 JSON 문자열로 보내주세요.(JSON.stringify) \n types: [ { type: '', description: '' } ]"
+          },
+          {
+            "name": "questions",
+            "in": "formData",
+            "type": "string",
+            "required": true,
+            "description": "배열 유형의 JSON 문자열로 보내주세요.(JSON.stringify) \n questions: [ { content: '', types: [] } ]"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "result": {
+                  "example": {
+                    "id": "number",
+                    "name": "string",
+                    "description": "string",
+                    "is_published": "boolean",
+                    "subName": "string",
+                    "path": "string",
+                    "created_at": "string"
+                  },
+                  "type": "object"
+                },
+                "status": {
+                  "example": "success",
+                  "type": "string"
+                },
+                "message": {
+                  "example": "테스트가 성공적으로 추가되었습니다.",
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "example": "error",
+                  "type": "string"
+                },
+                "message": {
+                  "example": "모든 필수 항목을 모두 입력해주세요.",
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "example": "error",
+                  "type": "string"
+                },
+                "message": {
+                  "example": "유효하지 않은 토큰 입니다.",
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "example": "error",
+                  "type": "string"
+                },
+                "message": {
+                  "example": "권한이 없습니다.",
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "example": "error",
+                  "type": "string"
+                },
+                "message": {
+                  "example": "테스트 등록 중 서버 오류가 발생했습니다.",
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
       }
     },
-    "/admin/getTests/{testId}": {
+    "/admin/tests/{testId}": {
       "get": {
-        "tags": ["관리자 테스트 조회"],
+        "tags": ["관리자 테스트"],
         "summary": "테스트 상세 조회",
         "description": "",
         "parameters": [
@@ -1111,227 +958,9 @@
             }
           }
         }
-      }
-    },
-    "/admin/deleteTest/{testId}": {
-      "delete": {
-        "tags": ["관리자 테스트 삭제"],
-        "summary": "테스트 삭제",
-        "description": "",
-        "parameters": [
-          {
-            "name": "authorization",
-            "in": "header",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "name": "testId",
-            "in": "path",
-            "required": true,
-            "type": "number"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "status": {
-                  "example": "success",
-                  "type": "string"
-                },
-                "message": {
-                  "example": "테스트가 성공적으로 삭제되었습니다.",
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "status": {
-                  "example": "error",
-                  "type": "string"
-                },
-                "message": {
-                  "example": "테스트 ID를 제공해주세요.",
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "status": {
-                  "example": "error",
-                  "type": "string"
-                },
-                "message": {
-                  "example": "유효하지 않은 토큰 입니다.",
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "status": {
-                  "example": "error",
-                  "type": "string"
-                },
-                "message": {
-                  "example": "권한이 없습니다.",
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal Server Error",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "status": {
-                  "example": "error",
-                  "type": "string"
-                },
-                "message": {
-                  "example": "테스트 삭제 중 서버 오류가 발생했습니다.",
-                  "type": "string"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/admin/updateTestPublishState": {
+      },
       "put": {
-        "tags": ["관리자 테스트 수정"],
-        "summary": "테스트 공개 여부 수정",
-        "description": "",
-        "parameters": [
-          {
-            "name": "authorization",
-            "in": "header",
-            "type": "string",
-            "required": true
-          },
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "type": "object",
-              "properties": {
-                "testId": {
-                  "example": "number"
-                },
-                "isPublished": {
-                  "example": "boolean"
-                }
-              }
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "status": {
-                  "example": "success",
-                  "type": "string"
-                },
-                "message": {
-                  "example": "테스트 공개 여부가 성공적으로 수정되었습니다.",
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "status": {
-                  "example": "error",
-                  "type": "string"
-                },
-                "message": {
-                  "example": "적절한 데이터를 제공해주세요..",
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "status": {
-                  "example": "error",
-                  "type": "string"
-                },
-                "message": {
-                  "example": "유효하지 않은 토큰 입니다.",
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "status": {
-                  "example": "error",
-                  "type": "string"
-                },
-                "message": {
-                  "example": "권한이 없습니다.",
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal Server Error",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "status": {
-                  "example": "error",
-                  "type": "string"
-                },
-                "message": {
-                  "example": "테스트 공개 상태 변경 중 서버 오류가 발생했습니다.",
-                  "type": "string"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/admin/updateTest/{testId}": {
-      "put": {
-        "tags": ["관리자 테스트 수정"],
+        "tags": ["관리자 테스트"],
         "summary": "테스트 수정",
         "description": "예시 코드 피그마 Admin-Panel-05 참조",
         "parameters": [
@@ -1468,6 +1097,220 @@
             }
           }
         }
+      },
+      "delete": {
+        "tags": ["관리자 테스트"],
+        "summary": "테스트 삭제",
+        "description": "",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "testId",
+            "in": "path",
+            "required": true,
+            "type": "number"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "example": "success",
+                  "type": "string"
+                },
+                "message": {
+                  "example": "테스트가 성공적으로 삭제되었습니다.",
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "example": "error",
+                  "type": "string"
+                },
+                "message": {
+                  "example": "테스트 ID를 제공해주세요.",
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "example": "error",
+                  "type": "string"
+                },
+                "message": {
+                  "example": "유효하지 않은 토큰 입니다.",
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "example": "error",
+                  "type": "string"
+                },
+                "message": {
+                  "example": "권한이 없습니다.",
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "example": "error",
+                  "type": "string"
+                },
+                "message": {
+                  "example": "테스트 삭제 중 서버 오류가 발생했습니다.",
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/updateTestPublishState": {
+      "put": {
+        "tags": ["관리자 테스트"],
+        "summary": "테스트 공개 여부 수정",
+        "description": "",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "type": "string",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "testId": {
+                  "example": "number"
+                },
+                "isPublished": {
+                  "example": "boolean"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "example": "success",
+                  "type": "string"
+                },
+                "message": {
+                  "example": "테스트 공개 여부가 성공적으로 수정되었습니다.",
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "example": "error",
+                  "type": "string"
+                },
+                "message": {
+                  "example": "적절한 데이터를 제공해주세요..",
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "example": "error",
+                  "type": "string"
+                },
+                "message": {
+                  "example": "유효하지 않은 토큰 입니다.",
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "example": "error",
+                  "type": "string"
+                },
+                "message": {
+                  "example": "권한이 없습니다.",
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "example": "error",
+                  "type": "string"
+                },
+                "message": {
+                  "example": "테스트 공개 상태 변경 중 서버 오류가 발생했습니다.",
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/admin/getAdmins": {
@@ -1562,7 +1405,7 @@
         }
       }
     },
-    "/user/getTests": {
+    "/user/tests": {
       "get": {
         "tags": ["사용자"],
         "summary": "테스트 목록 조회",
@@ -1655,7 +1498,7 @@
         }
       }
     },
-    "/user/getTests/{testId}": {
+    "/user/tests/{testId}": {
       "get": {
         "tags": ["사용자"],
         "summary": "테스트 상세 조회",
@@ -1789,7 +1632,7 @@
         }
       }
     },
-    "/user/getTestResult/{testId}": {
+    "/user/testResult/{testId}": {
       "post": {
         "tags": ["사용자"],
         "summary": "테스트 결과 조회",

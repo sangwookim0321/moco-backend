@@ -198,139 +198,108 @@ router.post('/refreshToken', async (req, res) => {
 	}
 })
 
-router.post('/addTest', upload.single('image'), checkAdminPermission, async (req, res) => {
+router.post('/test', upload.single('image'), checkAdminPermission, async (req, res) => {
 	// ---------------------------- 테스트 생성 ----------------------------
-
-	const { testName, testSubName, testDescription } = req.body
+	const { testName, testSubName, testDescription, types, questions } = req.body
 	const imageFile = req.file
 
-	if (!testName || !testSubName || !testDescription || !imageFile) {
+	if (!testName || !testSubName || !testDescription) {
 		return res.status(400).json({
 			status: 'error',
-			message: '필수 항목을 모두 입력해주세요.',
+			message: '테스트 이름 또는 테스트 부제목 또는 테스트 설명을 입력해주세요.',
+		})
+	} else if (!imageFile) {
+		return res.status(400).json({
+			status: 'error',
+			message: '이미지를 제공해주세요.',
+		})
+	} else if (!Array.isArray(types) || types.length < 2) {
+		return res.status(400).json({
+			status: 'error',
+			message: '타입(유형)을 최소 2개 이상 입력하거나, 적절한 타입 데이터를 제공해주세요.',
+		})
+	} else if (!Array.isArray(questions) || questions.length < 4) {
+		return res.status(400).json({
+			status: 'error',
+			message: '질문을 최소 4개 이상 입력하거나, 적절한 질문 데이터를 제공해주세요.',
 		})
 	}
 
 	try {
+		// 이미지 업로드
 		const stream = fs.createReadStream(imageFile.path)
 		const filePath = `tests/${imageFile.filename}`
 		const { error: uploadError } = await supabase.storage.from('moco-images').upload(filePath, stream)
 		if (uploadError) {
-			throw uploadError
+			throw { stage: 'upload', error: uploadError }
 		}
 
 		let created_at = new Date()
 
-		// Supabase를 사용하여 psych_tests.Tests 테이블에 새로운 테스트 추가
-		const { data, error } = await supabase.from('tests').insert({ name: testName, subName: testSubName, description: testDescription, is_published: false, path: filePath, created_at }).select()
+		// 테스트 추가
+		const { data: testData, error: testError } = await supabase
+			.from('tests')
+			.insert({
+				name: testName,
+				subName: testSubName,
+				description: testDescription,
+				is_published: false,
+				path: filePath,
+				created_at,
+			})
+			.single()
 
-		if (error) {
-			throw error
-		}
+		if (testError) throw { stage: 'tests', error: testError }
+
+		// 타입 추가
+		const typesData = types.map(({ type, description }) => ({
+			test_id: testData.id,
+			type,
+			description,
+		}))
+		const { error: typesError } = await supabase.from('types').insert(typesData)
+
+		if (typesError) throw { stage: 'types', error: typesError }
+
+		// 질문 추가
+		const questionData = questions.map((question) => ({
+			test_id: testData.id,
+			content: question.content,
+			types: question.types,
+		}))
+		const { error: questionsError } = await supabase.from('questions').insert(questionData)
+
+		if (questionsError) throw { stage: 'questions', error: questionsError }
 
 		res.status(201).json({
 			status: 'success',
 			message: '테스트가 성공적으로 추가되었습니다.',
-			result: data[0],
+			result: testData,
 		})
 	} catch (err) {
-		console.error('/addTest Error : ', err)
+		console.error('post /test Error : ', err)
+
+		let errorMessage = '테스트 등록 중 서버 오류가 발생했습니다.'
+
+		if (err.stage === 'upload') {
+			errorMessage = '이미지 업로드 중 서버 오류가 발생했습니다.'
+		}
+		if (err.stage === 'tests') {
+			errorMessage = '테스트 등록(tests) 중 서버 오류가 발생했습니다.'
+		} else if (err.stage === 'types') {
+			errorMessage = '테스트 타입(유형) 등록 중 서버 오류가 발생했습니다.'
+		} else if (err.stage === 'questions') {
+			errorMessage = '테스트 질문 등록 중 서버 오류가 발생했습니다.'
+		}
+
 		res.status(500).json({
 			status: 'error',
-			message: '테스트 추가 중 서버 오류가 발생했습니다.',
+			message: errorMessage,
 		})
 	}
 })
 
-router.post('/addType', checkAdminPermission, async (req, res) => {
-	// ---------------------------- 테스트 타입 생성 ----------------------------
-
-	const { testId, types } = req.body
-
-	if (!testId || !types || !Array.isArray(types) || types.length < 2) {
-		return res.status(400).json({
-			status: 'error',
-			message: '적절한 타입 데이터를 제공해주세요. 타입은 최소 2개 이상이어야 합니다.',
-		})
-	}
-
-	try {
-		// types 배열을 직접 순회하며 각 객체의 필드를 추출
-		const typesData = types.map(({ type, description }) => ({
-			test_id: testId,
-			type: type,
-			description: description,
-		}))
-
-		// Supabase를 사용하여 여러 행 추가
-		const { error } = await supabase.from('types').insert(typesData)
-
-		if (error) {
-			throw error
-		}
-
-		res.status(201).json({
-			status: 'success',
-			message: '타입이 성공적으로 추가되었습니다.',
-		})
-	} catch (err) {
-		console.error('/addType Error : ', err)
-		res.status(500).json({
-			status: 'error',
-			message: '타입 추가 중 서버 오류가 발생했습니다.',
-		})
-	}
-})
-
-router.post('/addQuestion', checkAdminPermission, async (req, res) => {
-	// ---------------------------- 테스트 질문 생성 ----------------------------
-	const { testId, questions } = req.body
-
-	if (!testId || !questions || !Array.isArray(questions) || questions.length < 4) {
-		return res.status(400).json({
-			status: 'error',
-			message: '질문은 최소 4개 이상이어야 합니다.',
-		})
-	}
-
-	for (const question of questions) {
-		if (!question.content || !Array.isArray(question.types) || question.types.length === 0) {
-			return res.status(400).json({
-				status: 'error',
-				message: '각 질문은 내용과 타입 목록을 가져야 합니다.',
-			})
-		}
-	}
-
-	try {
-		// 질문 데이터를 생성하여 배열에 추가
-		const questionData = questions.map((question) => ({
-			test_id: testId,
-			content: question.content,
-			types: question.types,
-		}))
-
-		// Supabase를 사용하여 여러 질문 추가
-		const { error } = await supabase.from('questions').insert(questionData)
-
-		if (error) {
-			throw error
-		}
-
-		res.status(201).json({
-			status: 'success',
-			message: '질문이 성공적으로 추가되었습니다.',
-		})
-	} catch (err) {
-		console.error('/addQuestion Error : ', err)
-		res.status(500).json({
-			status: 'error',
-			message: '질문 추가 중 서버 오류가 발생했습니다.',
-		})
-	}
-})
-
-router.get('/getTests', checkAdminPermission, async (req, res) => {
+router.get('/tests', checkAdminPermission, async (req, res) => {
 	// ---------------------------- 테스트 목록 조회 ----------------------------
 
 	const search = req.query.search || ''
@@ -388,7 +357,7 @@ router.get('/getTests', checkAdminPermission, async (req, res) => {
 	}
 })
 
-router.get('/getTests/:testId', checkAdminPermission, async (req, res) => {
+router.get('/tests/:testId', checkAdminPermission, async (req, res) => {
 	// ---------------------------- 테스트 상세 조회 ----------------------------
 	if (!req.params.testId) {
 		return res.status(400).json({
@@ -433,7 +402,7 @@ router.get('/getTests/:testId', checkAdminPermission, async (req, res) => {
 	}
 })
 
-router.delete('/deleteTest/:testId', checkAdminPermission, async (req, res) => {
+router.delete('/tests/:testId', checkAdminPermission, async (req, res) => {
 	// ---------------------------- 테스트 삭제 ----------------------------
 
 	const testId = req.params.testId
@@ -501,7 +470,7 @@ router.put('/updateTestPublishState', checkAdminPermission, async (req, res) => 
 	}
 })
 
-router.put('/updateTest/:testId', upload.single('image'), checkAdminPermission, async (req, res) => {
+router.put('/tests/:testId', upload.single('image'), checkAdminPermission, async (req, res) => {
 	// ---------------------------- 테스트 수정 ----------------------------
 	const testId = req.params.testId
 	const types = JSON.parse(req.body.types)
@@ -582,7 +551,7 @@ router.put('/updateTest/:testId', upload.single('image'), checkAdminPermission, 
 			message: '테스트가 성공적으로 수정되었습니다.',
 		})
 	} catch (err) {
-		console.error('/editTest Error : ', err)
+		console.error('/updateTest Error : ', err)
 		res.status(500).json({
 			status: 'error',
 			message: '테스트 수정 중 서버 오류가 발생했습니다.',
