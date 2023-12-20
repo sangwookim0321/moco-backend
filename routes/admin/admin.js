@@ -200,7 +200,9 @@ router.post('/refreshToken', async (req, res) => {
 
 router.post('/test', upload.single('image'), checkAdminPermission, async (req, res) => {
 	// ---------------------------- 테스트 생성 ----------------------------
-	const { testName, testSubName, testDescription, types, questions } = req.body
+	const types = JSON.parse(req.body.types)
+	const questions = JSON.parse(req.body.questions)
+	const { testName, testSubName, testDescription } = req.body
 	const imageFile = req.file
 
 	if (!testName || !testSubName || !testDescription) {
@@ -237,7 +239,7 @@ router.post('/test', upload.single('image'), checkAdminPermission, async (req, r
 		let created_at = new Date()
 
 		// 테스트 추가
-		const { data: testData, error: testError } = await supabase
+		const { data, error } = await supabase
 			.from('tests')
 			.insert({
 				name: testName,
@@ -247,23 +249,25 @@ router.post('/test', upload.single('image'), checkAdminPermission, async (req, r
 				path: filePath,
 				created_at,
 			})
-			.single()
+			.select()
 
-		if (testError) throw { stage: 'tests', error: testError }
+		if (error) throw { stage: 'tests', error: error }
 
+		console.log(data[0].id)
 		// 타입 추가
 		const typesData = types.map(({ type, description }) => ({
-			test_id: testData.id,
-			type,
-			description,
+			test_id: data[0].id,
+			type: type,
+			description: description,
 		}))
+
 		const { error: typesError } = await supabase.from('types').insert(typesData)
 
 		if (typesError) throw { stage: 'types', error: typesError }
 
 		// 질문 추가
 		const questionData = questions.map((question) => ({
-			test_id: testData.id,
+			test_id: data[0].id,
 			content: question.content,
 			types: question.types,
 		}))
@@ -274,7 +278,7 @@ router.post('/test', upload.single('image'), checkAdminPermission, async (req, r
 		res.status(201).json({
 			status: 'success',
 			message: '테스트가 성공적으로 추가되었습니다.',
-			result: testData,
+			result: data[0],
 		})
 	} catch (err) {
 		console.error('post /test Error : ', err)
