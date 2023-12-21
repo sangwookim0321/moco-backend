@@ -42,6 +42,17 @@ async function checkAdminPermission(req, res, next) {
 	}
 }
 
+const groupQuestionsBySetId = (questions) => {
+	const questionSets = {}
+	questions.forEach((question) => {
+		if (!questionSets[question.set_id]) {
+			questionSets[question.set_id] = []
+		}
+		questionSets[question.set_id].push(question)
+	})
+	return Object.values(questionSets)
+}
+
 router.post('/createAdmin', async (req, res) => {
 	// 관리자 생성
 	const token = req.headers.authorization.split(' ')[1]
@@ -210,21 +221,43 @@ router.post('/test', upload.single('image'), checkAdminPermission, async (req, r
 			status: 'error',
 			message: '테스트 이름 또는 테스트 부제목 또는 테스트 설명을 입력해주세요.',
 		})
-	} else if (!imageFile) {
+	}
+
+	if (!imageFile) {
 		return res.status(400).json({
 			status: 'error',
 			message: '이미지를 제공해주세요.',
 		})
-	} else if (!Array.isArray(types) || types.length < 2) {
+	}
+
+	if (!Array.isArray(types) || types.length < 2) {
 		return res.status(400).json({
 			status: 'error',
 			message: '타입(유형)을 최소 2개 이상 입력하거나, 적절한 타입 데이터를 제공해주세요.',
 		})
-	} else if (!Array.isArray(questions) || questions.length < 4) {
+	}
+
+	let totalQuestions = 0
+	for (const questionSet of questions) {
+		totalQuestions += questionSet.length
+	}
+
+	if (!Array.isArray(questions) || totalQuestions < 4) {
 		return res.status(400).json({
 			status: 'error',
-			message: '질문을 최소 4개 이상 입력하거나, 적절한 질문 데이터를 제공해주세요.',
+			message: '질문 세트는 최소 4개 이상이어야 합니다.',
 		})
+	}
+
+	for (const questionSet of questions) {
+		for (const question of questionSet) {
+			if (!question.content || !Array.isArray(question.types) || question.types.length === 0) {
+				return res.status(400).json({
+					status: 'error',
+					message: '각 질문은 내용과 타입 목록을 가져야 합니다.',
+				})
+			}
+		}
 	}
 
 	try {
@@ -266,11 +299,15 @@ router.post('/test', upload.single('image'), checkAdminPermission, async (req, r
 		if (typesError) throw { stage: 'types', error: typesError }
 
 		// 질문 추가
-		const questionData = questions.map((question) => ({
-			test_id: data[0].id,
-			content: question.content,
-			types: question.types,
-		}))
+		const questionData = questions.flatMap((questionSet, setIndex) =>
+			questionSet.map((question) => ({
+				test_id: data[0].id, // 테스트 ID
+				content: question.content, // 질문 내용
+				types: question.types, // 질문 유형
+				set_id: setIndex + 1, // 세트 ID (인덱스 + 1)
+			}))
+		)
+
 		const { error: questionsError } = await supabase.from('questions').insert(questionData)
 
 		if (questionsError) throw { stage: 'questions', error: questionsError }
@@ -388,13 +425,15 @@ router.get('/tests/:testId', checkAdminPermission, async (req, res) => {
 
 		if (questionsError) throw questionsError
 
+		const groupedQuestions = groupQuestionsBySetId(questionsData)
+
 		res.status(200).json({
 			status: 'success',
 			message: '테스트 상세 조회를 성공적으로 가져왔습니다.',
 			result: {
 				test: testData,
 				types: typesData,
-				questions: questionsData,
+				questions: groupedQuestions,
 			},
 		})
 	} catch (err) {
@@ -485,30 +524,32 @@ router.put('/tests/:testId', upload.single('image'), checkAdminPermission, async
 	if (!testName || !testDescription || !testSubName) {
 		return res.status(400).json({
 			status: 'error',
-			message: '필수 항목을 모두 입력해주세요.',
+			message: '테스트 이름 또는 테스트 부제목 또는 테스트 설명을 입력해주세요.',
 		})
 	}
 
 	if (!types || !Array.isArray(types) || types.length < 2) {
 		return res.status(400).json({
 			status: 'error',
-			message: '적절한 타입 데이터를 제공해주세요. 타입은 최소 2개 이상이어야 합니다.',
+			message: '타입(유형)을 최소 2개 이상 입력하거나, 적절한 타입 데이터를 제공해주세요.',
 		})
 	}
 
 	if (!questions || !Array.isArray(questions) || questions.length < 4) {
 		return res.status(400).json({
 			status: 'error',
-			message: '질문은 최소 4개 이상이어야 합니다.',
+			message: '질문 세트는 최소 4개 이상이어야 합니다.',
 		})
 	}
 
-	for (const question of questions) {
-		if (!question.content || !Array.isArray(question.types) || question.types.length === 0) {
-			return res.status(400).json({
-				status: 'error',
-				message: '각 질문은 내용과 타입 목록을 가져야 합니다.',
-			})
+	for (const questionSet of questions) {
+		for (const question of questionSet) {
+			if (!question.content || !Array.isArray(question.types) || question.types.length === 0) {
+				return res.status(400).json({
+					status: 'error',
+					message: '각 질문은 내용과 타입 목록을 가져야 합니다.',
+				})
+			}
 		}
 	}
 
@@ -521,12 +562,14 @@ router.put('/tests/:testId', upload.single('image'), checkAdminPermission, async
 
 		// 새 이미지 업로드
 		let filePath
+
 		if (imageFile) {
 			const stream = fs.createReadStream(imageFile.path)
 			filePath = `tests/${imageFile.filename}`
 			const { error: uploadError } = await supabase.storage.from('moco-images').upload(filePath, stream)
 			if (uploadError) throw uploadError
 		}
+
 		// tests 테이블 업데이트
 		const updateData = { name: testName, subName: testSubName, description: testDescription }
 		if (filePath) updateData.path = filePath
@@ -544,10 +587,21 @@ router.put('/tests/:testId', upload.single('image'), checkAdminPermission, async
 		}
 
 		// questions 테이블 수정
-		for (const question of questions) {
-			const { error: questionError } = await supabase.from('questions').update(question).match({ test_id: testId, id: question.id })
+		// 외부 루프는 각 질문 세트를 반복합니다.
+		// 내부 루프는 각 세트 내의 개별 질문을 반복합니다.
+		// 각 질문을 데이터베이스에 업데이트합니다.
+		for (const questionSet of questions) {
+			for (const question of questionSet) {
+				const { error: questionError } = await supabase
+					.from('questions')
+					.update({
+						content: question.content,
+						types: question.types,
+					})
+					.match({ test_id: testId, id: question.id })
 
-			if (questionError) throw questionError
+				if (questionError) throw questionError
+			}
 		}
 
 		res.status(200).json({

@@ -23,6 +23,17 @@ async function updateTotalCount(testId) {
 	}
 }
 
+const groupQuestionsBySetId = (questions) => {
+	const questionSets = {}
+	questions.forEach((question) => {
+		if (!questionSets[question.set_id]) {
+			questionSets[question.set_id] = []
+		}
+		questionSets[question.set_id].push(question)
+	})
+	return Object.values(questionSets)
+}
+
 router.get('/tests', async (req, res) => {
 	//  ------------------------- 사용자 테스트 목록 가져오기 -------------------------
 	const search = req.query.search || ''
@@ -106,13 +117,15 @@ router.get('/tests/:testId', async (req, res) => {
 
 		if (questionsError) throw { stage: 'questions', error: questionsError }
 
+		const groupedQuestions = groupQuestionsBySetId(questionsData)
+
 		res.status(200).json({
 			status: 'success',
 			message: '테스트 상세 조회를 성공적으로 가져왔습니다.',
 			result: {
 				test: testData,
 				types: typesData,
-				questions: questionsData,
+				questions: groupedQuestions,
 			},
 		})
 	} catch (err) {
@@ -208,7 +221,7 @@ router.post('/saveResult', async (req, res) => {
 			message: '테스트 결과를 제공해주세요.',
 		})
 	}
-	console.log(req.body)
+
 	try {
 		const { testId, types, descriptions } = req.body
 
