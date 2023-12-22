@@ -187,8 +187,6 @@ router.post('/refreshToken', async (req, res) => {
 		const decoded = jwt.verify(refreshToken, process.env.REFRESH_SECRET_KEY)
 		const userId = decoded.userId
 
-		//
-
 		// 새로운 액세스 토큰을 발급
 		const accessToken = jwt.sign({ userId: userId }, process.env.SECRET_KEY, {
 			expiresIn: '1h', // 액세스 토큰의 유효 기간
@@ -209,34 +207,35 @@ router.post('/refreshToken', async (req, res) => {
 	}
 })
 
-router.post('/test', upload.single('image'), checkAdminPermission, async (req, res) => {
+router.post('/tests', upload.single('imageFile'), checkAdminPermission, async (req, res) => {
 	// ---------------------------- 테스트 생성 ----------------------------
 	const types = JSON.parse(req.body.types)
 	const questions = JSON.parse(req.body.questions)
 	const { testName, testSubName, testDescription } = req.body
 	const imageFile = req.file
 
+	console.log('1')
 	if (!testName || !testSubName || !testDescription) {
 		return res.status(400).json({
 			status: 'error',
 			message: '테스트 이름 또는 테스트 부제목 또는 테스트 설명을 입력해주세요.',
 		})
 	}
-
+	console.log('2')
 	if (!imageFile) {
 		return res.status(400).json({
 			status: 'error',
 			message: '이미지를 제공해주세요.',
 		})
 	}
-
+	console.log('3')
 	if (!Array.isArray(types) || types.length < 2) {
 		return res.status(400).json({
 			status: 'error',
 			message: '타입(유형)을 최소 2개 이상 입력하거나, 적절한 타입 데이터를 제공해주세요.',
 		})
 	}
-
+	console.log('4')
 	let totalQuestions = 0
 	for (const questionSet of questions) {
 		totalQuestions += questionSet.length
@@ -259,7 +258,7 @@ router.post('/test', upload.single('image'), checkAdminPermission, async (req, r
 			}
 		}
 	}
-
+	console.log('s')
 	try {
 		// 이미지 업로드
 		const stream = fs.createReadStream(imageFile.path)
@@ -513,7 +512,7 @@ router.put('/updateTestPublishState', checkAdminPermission, async (req, res) => 
 	}
 })
 
-router.put('/tests/:testId', upload.single('image'), checkAdminPermission, async (req, res) => {
+router.put('/tests/:testId', upload.single('imageFile'), checkAdminPermission, async (req, res) => {
 	// ---------------------------- 테스트 수정 ----------------------------
 	const testId = req.params.testId
 	const types = JSON.parse(req.body.types)
@@ -535,10 +534,15 @@ router.put('/tests/:testId', upload.single('image'), checkAdminPermission, async
 		})
 	}
 
-	if (!questions || !Array.isArray(questions) || questions.length < 4) {
+	let totalQuestions = 0
+	for (const questionSet of questions) {
+		totalQuestions += questionSet.length
+	}
+
+	if (!Array.isArray(questions) || totalQuestions < 4) {
 		return res.status(400).json({
 			status: 'error',
-			message: '질문 세트는 최소 4개 이상이어야 합니다.',
+			message: '질문은 최소 4개 이상이어야 합니다.',
 		})
 	}
 
