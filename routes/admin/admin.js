@@ -214,29 +214,29 @@ router.post('/tests', upload.single('imageFile'), checkAdminPermission, async (r
 	const { testName, testSubName, testDescription } = req.body
 	const imageFile = req.file
 
-	console.log('1')
 	if (!testName || !testSubName || !testDescription) {
 		return res.status(400).json({
 			status: 'error',
 			message: '테스트 이름 또는 테스트 부제목 또는 테스트 설명을 입력해주세요.',
 		})
 	}
-	console.log('2')
+
 	if (!imageFile) {
 		return res.status(400).json({
 			status: 'error',
 			message: '이미지를 제공해주세요.',
 		})
 	}
-	console.log('3')
+
 	if (!Array.isArray(types) || types.length < 2) {
 		return res.status(400).json({
 			status: 'error',
 			message: '타입(유형)을 최소 2개 이상 입력하거나, 적절한 타입 데이터를 제공해주세요.',
 		})
 	}
-	console.log('4')
+
 	let totalQuestions = 0
+
 	for (const questionSet of questions) {
 		totalQuestions += questionSet.length
 	}
@@ -249,6 +249,14 @@ router.post('/tests', upload.single('imageFile'), checkAdminPermission, async (r
 	}
 
 	for (const questionSet of questions) {
+		// 각 질문 세트 내의 질문 수가 2개가 아닌 경우 에러 반환
+		if (questionSet.length !== 2) {
+			return res.status(400).json({
+				status: 'error',
+				message: 'questions 필드 형식이 옳지 않습니다.',
+			})
+		}
+
 		for (const question of questionSet) {
 			if (!question.content || !Array.isArray(question.types) || question.types.length === 0) {
 				return res.status(400).json({
@@ -258,7 +266,7 @@ router.post('/tests', upload.single('imageFile'), checkAdminPermission, async (r
 			}
 		}
 	}
-	console.log('s')
+
 	try {
 		// 이미지 업로드
 		const stream = fs.createReadStream(imageFile.path)
@@ -298,14 +306,20 @@ router.post('/tests', upload.single('imageFile'), checkAdminPermission, async (r
 		if (typesError) throw { stage: 'types', error: typesError }
 
 		// 질문 추가
-		const questionData = questions.flatMap((questionSet, setIndex) =>
-			questionSet.map((question) => ({
-				test_id: data[0].id, // 테스트 ID
-				content: question.content, // 질문 내용
-				types: question.types, // 질문 유형
-				set_id: setIndex + 1, // 세트 ID (인덱스 + 1)
-			}))
-		)
+		let setIndex = 1
+		const questionData = []
+
+		for (const questionSet of questions) {
+			for (const question of questionSet) {
+				questionData.push({
+					test_id: data[0].id, // 테스트 ID
+					content: question.content, // 질문 내용
+					types: question.types, // 질문 유형
+					set_id: setIndex, // 세트 ID
+				})
+			}
+			setIndex++ // 다음 세트로 넘어갈 때 인덱스 증가
+		}
 
 		const { error: questionsError } = await supabase.from('questions').insert(questionData)
 
@@ -535,6 +549,7 @@ router.put('/tests/:testId', upload.single('imageFile'), checkAdminPermission, a
 	}
 
 	let totalQuestions = 0
+
 	for (const questionSet of questions) {
 		totalQuestions += questionSet.length
 	}
@@ -547,6 +562,14 @@ router.put('/tests/:testId', upload.single('imageFile'), checkAdminPermission, a
 	}
 
 	for (const questionSet of questions) {
+		// 각 질문 세트 내의 질문 수가 2개가 아닌 경우 에러 반환
+		if (questionSet.length !== 2) {
+			return res.status(400).json({
+				status: 'error',
+				message: 'questions 필드 형식이 옳지 않습니다.',
+			})
+		}
+
 		for (const question of questionSet) {
 			if (!question.content || !Array.isArray(question.types) || question.types.length === 0) {
 				return res.status(400).json({
