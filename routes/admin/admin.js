@@ -534,6 +534,13 @@ router.put('/tests/:testId', upload.single('imageFile'), checkAdminPermission, a
 	const { testName, testSubName, testDescription, oldImagePath } = req.body
 	const imageFile = req.file
 
+	if (!testId) {
+		return res.status(400).json({
+			status: 'error',
+			message: '테스트 ID를 제공해주세요.',
+		})
+	}
+
 	if (!testName || !testDescription || !testSubName) {
 		return res.status(400).json({
 			status: 'error',
