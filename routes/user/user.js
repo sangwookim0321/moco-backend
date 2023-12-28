@@ -1,6 +1,8 @@
+const OpenAI = require('openai')
 const express = require('express')
 const router = express.Router()
 const supabase = require('../../models/db.js')
+const fs = require('fs')
 
 async function updateTotalCount(testId) {
 	try {
@@ -317,5 +319,110 @@ router.get('/statistics', async (req, res) => {
 		})
 	}
 })
+
+router.post('/aiChat', async (req, res) => {
+	// ---------------------------- GPT Assistant 호출 ----------------------------
+	const { name, myMessage } = req.body
+
+	if (!name) {
+		return res.status(400).json({
+			status: 'error',
+			message: '이름을 제공해주세요.',
+		})
+	}
+
+	if (!myMessage) {
+		return res.status(400).json({
+			status: 'error',
+			message: '메시지를 입력해주세요.',
+		})
+	}
+
+	try {
+		const { data: resultData, error } = await supabase.from('chatmodel').select('*').eq('name', name)
+
+		if (error) throw error
+
+		const message = await gptAssistant(resultData, myMessage)
+
+		res.status(200).json({
+			status: 'success',
+			message: 'GPT Assistant 호출을 성공적으로 가져왔습니다.',
+			result: message,
+		})
+	} catch (err) {
+		console.error('/user/aiChat Error : ', err)
+
+		res.status(500).json({
+			status: 'error',
+			message: 'GPT Assistant 호출 중 서버 오류가 발생했습니다.',
+		})
+	}
+})
+
+const openai = new OpenAI(process.env.OPENAI_API_KEY)
+
+async function gptAssistant(data, myMessage) {
+	if (!data || data.length === 0 || !data[0].name) {
+		console.error('Error: Name not found in data')
+		throw new Error('Name not found in data')
+	}
+
+	const { name, prompt } = data[0]
+
+	let pdfFile
+
+	try {
+		pdfFile = await openai.files.create({
+			file: fs.createReadStream(`./pdf/${name}.pdf`),
+			purpose: 'assistants',
+		})
+	} catch (error) {
+		console.error('Error creating file in OpenAI:', error.message)
+		throw new Error('Error creating file in OpenAI')
+	}
+
+	const assistant = await openai.beta.assistants.create({
+		name: name,
+		instructions: prompt,
+		tools: [{ type: 'retrieval' }],
+		model: 'gpt-4-1106-preview',
+		file_ids: [pdfFile.id],
+	})
+
+	const thread = await openai.beta.threads.create()
+
+	await openai.beta.threads.messages.create(thread.id, {
+		role: 'user',
+		content: myMessage,
+	})
+
+	const run = await openai.beta.threads.runs.create(thread.id, {
+		assistant_id: assistant.id,
+		instructions: prompt,
+	})
+
+	// 작업 완료 여부를 체크하는 함수
+	async function checkRunStatus(threadId, runId) {
+		for (let i = 0; i < 10; i++) {
+			// 최대 10번 시도
+			const runStatus = await openai.beta.threads.runs.retrieve(threadId, runId)
+
+			if (runStatus.status === 'completed') {
+				let messages = await openai.beta.threads.messages.list(threadId)
+				return messages.data.map((msg) => ({
+					role: msg.role,
+					content: msg.content[0].text.value,
+				}))
+			}
+
+			// 1초 간격으로 재시도
+			await new Promise((resolve) => setTimeout(resolve, 1000))
+		}
+		throw new Error('Run did not complete in time.')
+	}
+
+	return await checkRunStatus(thread.id, run.id)
+}
 
 module.exports = router
