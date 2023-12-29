@@ -4,6 +4,8 @@ const router = express.Router()
 const supabase = require('../../models/db.js')
 const fs = require('fs')
 
+const openai = new OpenAI(process.env.OPENAI_API_KEY)
+
 async function updateTotalCount(testId) {
 	try {
 		// result 테이블에서 count의 총합 계산
@@ -321,13 +323,13 @@ router.get('/statistics', async (req, res) => {
 })
 
 router.post('/aiChat', async (req, res) => {
-	// ---------------------------- GPT Assistant 호출 ----------------------------
-	const { name, myMessage } = req.body
+	// ---------------------------- GPT Assistant 호출 및 스레드 생성 ----------------------------
+	const { name, assistantId, myMessage } = req.body
 
-	if (!name) {
+	if (!assistantId) {
 		return res.status(400).json({
 			status: 'error',
-			message: '이름을 제공해주세요.',
+			message: 'Assistant Id 를 제공해주세요.',
 		})
 	}
 
@@ -337,9 +339,9 @@ router.post('/aiChat', async (req, res) => {
 			message: '메시지를 입력해주세요.',
 		})
 	}
-
+	// thread_bvXgeWBJrakc9DIaXE311Cvl
 	try {
-		const { data: resultData, error } = await supabase.from('chatmodel').select('*').eq('name', name)
+		const { data: resultData, error } = await supabase.from('chatmodel').select('*').eq('assistant_id', assistantId)
 
 		if (error) throw error
 
@@ -360,35 +362,62 @@ router.post('/aiChat', async (req, res) => {
 	}
 })
 
-const openai = new OpenAI(process.env.OPENAI_API_KEY)
+router.delete('/aiChat', async (req, res) => {
+	// ---------------------------- GPT Assistant 삭제 ----------------------------
+	const { threadId } = req.body
+
+	if (!threadId) {
+		return res.status(400).json({
+			status: 'error',
+			message: 'threadId를 제공해주세요.',
+		})
+	}
+
+	try {
+		const response = await openai.beta.threads.del(threadId)
+
+		res.status(200).json({
+			status: 'success',
+			message: '해당 GPT Assistant thread 를 삭제했습니다.',
+			result: response,
+		})
+	} catch (err) {
+		console.error('/user/aiChat Error : ', err)
+
+		res.status(500).json({
+			status: 'error',
+			message: 'GPT Assistant 삭제 중 서버 오류가 발생했습니다.',
+		})
+	}
+})
 
 async function gptAssistant(data, myMessage) {
-	if (!data || data.length === 0 || !data[0].name) {
+	if (!data || data.length === 0 || !data[0].name || !data[0].assistant_id) {
 		console.error('Error: Name not found in data')
 		throw new Error('Name not found in data')
 	}
 
-	const { name, prompt } = data[0]
+	const { name, prompt, assistant_id } = data[0]
 
-	let pdfFile
+	// let pdfFile
 
-	try {
-		pdfFile = await openai.files.create({
-			file: fs.createReadStream(`./pdf/${name}.pdf`),
-			purpose: 'assistants',
-		})
-	} catch (error) {
-		console.error('Error creating file in OpenAI:', error.message)
-		throw new Error('Error creating file in OpenAI')
-	}
+	// try {
+	// 	pdfFile = await openai.files.create({
+	// 		file: fs.createReadStream(`./pdf/${name}.pdf`),
+	// 		purpose: 'assistants',
+	// 	})
+	// } catch (error) {
+	// 	console.error('Error creating file in OpenAI:', error.message)
+	// 	throw new Error('Error creating file in OpenAI')
+	// }
 
-	const assistant = await openai.beta.assistants.create({
-		name: name,
-		instructions: prompt,
-		tools: [{ type: 'retrieval' }],
-		model: 'gpt-4-1106-preview',
-		file_ids: [pdfFile.id],
-	})
+	// const assistant = await openai.beta.assistants.create({
+	// 	name: name,
+	// 	instructions: prompt,
+	// 	tools: [{ type: 'retrieval' }],
+	// 	model: 'gpt-4-1106-preview',
+	// 	file_ids: [pdfFile.id],
+	// })
 
 	const thread = await openai.beta.threads.create()
 
@@ -398,7 +427,7 @@ async function gptAssistant(data, myMessage) {
 	})
 
 	const run = await openai.beta.threads.runs.create(thread.id, {
-		assistant_id: assistant.id,
+		assistant_id: assistant_id,
 		instructions: prompt,
 	})
 
@@ -413,6 +442,7 @@ async function gptAssistant(data, myMessage) {
 				return messages.data.map((msg) => ({
 					role: msg.role,
 					content: msg.content[0].text.value,
+					threadId: threadId,
 				}))
 			}
 
