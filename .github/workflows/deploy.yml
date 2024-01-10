@@ -13,6 +13,10 @@ jobs:
 
     - name: Set up SSH
       run: |
+        echo "PRIVATE KEY : $SSH_PRIVATE_KEY"
+        echo "REMOTE_HOST : $REMOTE_HOST"
+        echo "REMOTE_USER : $REMOTE_USER"
+        echo "TARGET : $TARGET"
         echo "SSH Set Up Start"
         which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )
         eval $(ssh-agent -s)
@@ -22,10 +26,6 @@ jobs:
         chmod 600 ~/.ssh/id_rsa
         ssh-keyscan -H $REMOTE_HOST >> ~/.ssh/known_hosts
         echo "SSH Set Up Complete"
-        echo "PRIVATE KEY : $SSH_PRIVATE_KEY"
-        echo "REMOTE_HOST : $REMOTE_HOST"
-        echo "REMOTE_USER : $REMOTE_USER"
-        echo "TARGET : $TARGET"
     - name: Deploy to Server
       run: |
         rsync -avz --exclude='.git*' --exclude='node_modules' ./ $REMOTE_USER@$REMOTE_HOST:$TARGET
