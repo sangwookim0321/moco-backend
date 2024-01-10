@@ -13,15 +13,26 @@ jobs:
 
     - name: Set up SSH
       run: |
+        echo "SSH Set Up Start"
+        which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )
+        echo "SSH Set Up 1"
+        eval $(ssh-agent -s)
+        echo "SSH Set Up 2"
+        echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+        echo "SSH Set Up 3"
         mkdir -p ~/.ssh/
+        echo "SSH Set Up 4"
         echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+        echo "SSH Set Up 5"
         chmod 600 ~/.ssh/id_rsa
-        ssh-keyscan -H $REMOTE_HOST >> ~/.ssh/known_hosts
-
+        echo "SSH Set Up 6"
+        echo "Trying to scan SSH key of the remote host"
+        echo "REMOTE_HOST: $REMOTE_HOST"
+        ssh-keyscan -H $REMOTE_HOST 2>&1 | tee -a ~/.ssh/known_hosts
+        echo "SSH Set Up Complete"
     - name: Deploy to Server
       run: |
         rsync -avz --exclude='.git*' --exclude='node_modules' ./ $REMOTE_USER@$REMOTE_HOST:$TARGET
-
     env:
       SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
       REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
