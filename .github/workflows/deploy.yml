@@ -26,6 +26,9 @@ jobs:
       run: |
         ssh $REMOTE_USER@$REMOTE_HOST "cd $TARGET && git pull"
         # rsync -avz --exclude='.git*' --exclude='node_modules' ./ $REMOTE_USER@$REMOTE_HOST:$TARGET
+    - name: Restart Server
+      run: |
+        ssh $REMOTE_USER@$REMOTE_HOST "cd $TARGET && screen -S moco_server -X quit; screen -dmS moco_server npm start"
     env:
       SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
       REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
