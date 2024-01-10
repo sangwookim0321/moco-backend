@@ -25,6 +25,7 @@ jobs:
         echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
         echo "SSH Set Up 5"
         chmod 600 ~/.ssh/id_rsa
+        echo "SSH Set Up 6"
         ssh-keyscan -H $REMOTE_HOST >> ~/.ssh/known_hosts
         echo "SSH Set Up Complete"
     - name: Deploy to Server
