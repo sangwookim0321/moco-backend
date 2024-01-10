@@ -13,7 +13,7 @@ jobs:
 
     - name: Set up SSH
       run: |
-        - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )'
+        - which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )
         - eval $(ssh-agent -s)
         mkdir -p ~/.ssh/
         echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
