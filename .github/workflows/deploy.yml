@@ -26,10 +26,10 @@ jobs:
         echo "SSH Set Up 5"
         chmod 600 ~/.ssh/id_rsa
         echo "SSH Set Up 6"
-        ssh-keyscan -H $REMOTE_HOST >> ~/.ssh/known_hosts
-        echo "SSH Set Up 7"
+        echo "Trying to scan SSH key of the remote host"
+        echo "REMOTE_HOST: $REMOTE_HOST"
+        ssh-keyscan -H $REMOTE_HOST 2>&1 | tee -a ~/.ssh/known_hosts
         echo "SSH Set Up Complete"
-        echo "SSH Set Up 8"
     - name: Deploy to Server
       run: |
         rsync -avz --exclude='.git*' --exclude='node_modules' ./ $REMOTE_USER@$REMOTE_HOST:$TARGET
