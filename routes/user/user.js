@@ -103,6 +103,7 @@ router.get("/tests", async (req, res) => {
 
 router.get("/tests/:testId", async (req, res) => {
   // ---------------------------- 테스트 상세 조회 ----------------------------
+  console.log("테스트 상세 조회")
   if (!req.params.testId) {
     return res.status(400).json({
       status: "error",
