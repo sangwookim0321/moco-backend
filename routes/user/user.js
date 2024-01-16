@@ -395,6 +395,7 @@ router.post('/aiChat', async (req, res) => {
     res.status(500).json({
       status: "error",
       message: "GPT Assistant 호출 중 서버 오류가 발생했습니다.",
+	  error: err,
     })
   }
 })
