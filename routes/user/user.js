@@ -322,9 +322,13 @@ router.get('/statistics', async (req, res) => {
 	}
 })
 
+router.post('/login/kakao', async (req, res) => {
+	// ---------------------------- 카카오 로그인 ----------------------------
+})
+
 router.post('/aiChat', async (req, res) => {
 	// ---------------------------- GPT Assistant 호출 및 스레드 생성 ----------------------------
-	const { name, assistantId, myMessage } = req.body
+	const { assistantId, prompt } = req.body
 
 	if (!assistantId) {
 		return res.status(400).json({
@@ -333,7 +337,7 @@ router.post('/aiChat', async (req, res) => {
 		})
 	}
 
-	if (!myMessage) {
+	if (!prompt) {
 		return res.status(400).json({
 			status: 'error',
 			message: '메시지를 입력해주세요.',
@@ -341,11 +345,8 @@ router.post('/aiChat', async (req, res) => {
 	}
 	// thread_bvXgeWBJrakc9DIaXE311Cvl
 	try {
-		const { data: resultData, error } = await supabase.from('chatmodel').select('*').eq('assistant_id', assistantId)
 
-		if (error) throw error
-
-		const message = await gptAssistant(resultData, myMessage)
+		const message = await gptAssistant(assistantId, prompt)
 
 		res.status(200).json({
 			status: 'success',
@@ -362,42 +363,40 @@ router.post('/aiChat', async (req, res) => {
 	}
 })
 
-router.delete('/aiChat', async (req, res) => {
-	// ---------------------------- GPT Assistant 삭제 ----------------------------
-	const { threadId } = req.body
+// router.delete('/aiChat', async (req, res) => {
+// 	// ---------------------------- GPT Assistant 삭제 ----------------------------
+// 	const { threadId } = req.body
 
-	if (!threadId) {
-		return res.status(400).json({
-			status: 'error',
-			message: 'threadId를 제공해주세요.',
-		})
-	}
+// 	if (!threadId) {
+// 		return res.status(400).json({
+// 			status: 'error',
+// 			message: 'threadId를 제공해주세요.',
+// 		})
+// 	}
 
-	try {
-		const response = await openai.beta.threads.del(threadId)
+// 	try {
+// 		const response = await openai.beta.threads.del(threadId)
 
-		res.status(200).json({
-			status: 'success',
-			message: '해당 GPT Assistant thread 를 삭제했습니다.',
-			result: response,
-		})
-	} catch (err) {
-		console.error('/user/aiChat Error : ', err)
+// 		res.status(200).json({
+// 			status: 'success',
+// 			message: '해당 GPT Assistant thread 를 삭제했습니다.',
+// 			result: response,
+// 		})
+// 	} catch (err) {
+// 		console.error('/user/aiChat Error : ', err)
 
-		res.status(500).json({
-			status: 'error',
-			message: 'GPT Assistant 삭제 중 서버 오류가 발생했습니다.',
-		})
-	}
-})
+// 		res.status(500).json({
+// 			status: 'error',
+// 			message: 'GPT Assistant 삭제 중 서버 오류가 발생했습니다.',
+// 		})
+// 	}
+// })
 
-async function gptAssistant(data, myMessage) {
-	if (!data || data.length === 0 || !data[0].name || !data[0].assistant_id) {
+async function gptAssistant(assistantId, prompt) {
+	if (!assistantId) {
 		console.error('Error: Name not found in data')
 		throw new Error('Name not found in data')
 	}
-
-	const { name, prompt, assistant_id } = data[0]
 
 	// let pdfFile
 
@@ -423,12 +422,11 @@ async function gptAssistant(data, myMessage) {
 
 	await openai.beta.threads.messages.create(thread.id, {
 		role: 'user',
-		content: myMessage,
+		content: prompt,
 	})
 
 	const run = await openai.beta.threads.runs.create(thread.id, {
-		assistant_id: assistant_id,
-		instructions: prompt,
+		assistant_id: assistantId,
 	})
 
 	// 작업 완료 여부를 체크하는 함수
