@@ -365,7 +365,7 @@ router.post('/login/kakao', async (req, res) => {
 
 router.post('/aiChat', async (req, res) => {
 	// ---------------------------- GPT Assistant 호출 및 스레드 생성 ----------------------------
-	const { name, assistantId, myMessage } = req.body
+	const { assistantId, prompt } = req.body
 
   if (!assistantId) {
     return res.status(400).json({
@@ -374,19 +374,15 @@ router.post('/aiChat', async (req, res) => {
     })
   }
 
-	if (!myMessage) {
+	if (!prompt) {
 		return res.status(400).json({
 			status: 'error',
 			message: '메시지를 입력해주세요.',
 		})
 	}
-	// thread_bvXgeWBJrakc9DIaXE311Cvl
+
 	try {
-		const { data: resultData, error } = await supabase.from('chatmodel').select('*').eq('assistant_id', assistantId)
-
-		if (error) throw error
-
-		const message = await gptAssistant(resultData, myMessage)
+		const message = await gptAssistant(assistantId, prompt)
 
     res.status(200).json({
       status: "success",
@@ -432,13 +428,11 @@ router.delete('/aiChat', async (req, res) => {
 	}
 })
 
-async function gptAssistant(data, myMessage) {
-	if (!data || data.length === 0 || !data[0].name || !data[0].assistant_id) {
-		console.error('Error: Name not found in data')
-		throw new Error('Name not found in data')
+async function gptAssistant(assistantId, prompt) {
+	if (!assistantId || !prompt) {
+		console.error('Error: 어시스턴트 ID 또는 프롬프트가 없습니다.')
+		throw new Error('어시스턴트 ID 또는 프롬프트가 없습니다.')
 	}
-
-	const { name, prompt, assistant_id } = data[0]
 
   // let pdfFile
 
@@ -464,12 +458,11 @@ async function gptAssistant(data, myMessage) {
 
 	await openai.beta.threads.messages.create(thread.id, {
 		role: 'user',
-		content: myMessage,
+		content: prompt,
 	})
 
 	const run = await openai.beta.threads.runs.create(thread.id, {
-		assistant_id: assistant_id,
-		instructions: prompt,
+		assistant_id: assistantId,
 	})
 
   // 작업 완료 여부를 체크하는 함수
