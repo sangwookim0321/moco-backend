@@ -396,8 +396,7 @@ router.post(
 
       if (err.stage === "upload") {
         errorMessage = "이미지 업로드 중 서버 오류가 발생했습니다."
-      }
-      if (err.stage === "tests") {
+      } else if (err.stage === "tests") {
         errorMessage = "테스트 등록(tests) 중 서버 오류가 발생했습니다."
       } else if (err.stage === "types") {
         errorMessage = "테스트 타입(유형) 등록 중 서버 오류가 발생했습니다."
