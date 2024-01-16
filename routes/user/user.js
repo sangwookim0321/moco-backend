@@ -365,7 +365,7 @@ router.post('/login/kakao', async (req, res) => {
 
 router.post('/aiChat', async (req, res) => {
 	// ---------------------------- GPT Assistant 호출 및 스레드 생성 ----------------------------
-	const { assistantId, prompt } = req.body
+	const { assistantId, prompt, threadId } = req.body
 
   if (!assistantId) {
     return res.status(400).json({
@@ -382,7 +382,7 @@ router.post('/aiChat', async (req, res) => {
 	}
 
 	try {
-		const message = await gptAssistant(assistantId, prompt)
+		const message = await gptAssistant(assistantId, prompt, threadId)
 
     res.status(200).json({
       status: "success",
@@ -402,7 +402,7 @@ router.post('/aiChat', async (req, res) => {
 
 router.delete('/aiChat', async (req, res) => {
 	// ---------------------------- GPT Assistant 삭제 ----------------------------
-	const { threadId } = req.body
+	const threadId = req.query.threadId
 
 	if (!threadId) {
 		return res.status(400).json({
@@ -429,7 +429,7 @@ router.delete('/aiChat', async (req, res) => {
 	}
 })
 
-async function gptAssistant(assistantId, prompt) {
+async function gptAssistant(assistantId, prompt, threadId) {
 	if (!assistantId || !prompt) {
 		console.error('Error: 어시스턴트 ID 또는 프롬프트가 없습니다.')
 		throw new Error('어시스턴트 ID 또는 프롬프트가 없습니다.')
@@ -455,12 +455,20 @@ async function gptAssistant(assistantId, prompt) {
   // 	file_ids: [pdfFile.id],
   // })
 
-  const thread = await openai.beta.threads.create()
+  let thread = {
+	id: ''
+  }
+  if (!threadId) {
+	thread = await openai.beta.threads.create()
+  } else if (threadId) {
+	thread.id = threadId
+  }
 
 	await openai.beta.threads.messages.create(thread.id, {
 		role: 'user',
 		content: prompt,
 	})
+	console.log(thread.id)
 
 	const run = await openai.beta.threads.runs.create(thread.id, {
 		assistant_id: assistantId,
@@ -473,7 +481,7 @@ async function gptAssistant(assistantId, prompt) {
       const runStatus = await openai.beta.threads.runs.retrieve(threadId, runId)
 
       if (runStatus.status === "completed") {
-        let messages = await openai.beta.threads.messages.list(threadId)
+        let messages = await openai.beta.threads.messages.list(threadId, {limit: 1, order: 'desc'})
         return messages.data.map((msg) => ({
           role: msg.role,
           content: msg.content[0].text.value,
