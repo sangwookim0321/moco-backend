@@ -5,11 +5,9 @@
     "description": "Moco API 문서입니다.",
     "version": "1.0.0"
   },
-  "host": "localhost:9000",
+  "host": "pointjumpit.duckdns.org:9000",
   "basePath": "/",
-  "schemes": [
-    "http"
-  ],
+  "schemes": ["http"],
   "securityDefinitions": {
     "Bearer": {
       "type": "apiKey",
@@ -898,26 +896,26 @@
                 "result": {
                   "example": {
                     "test": {
-                        "id": "number",
-                        "name": "string",
-                        "description": "string",
-                        "is_published": "boolean",
-                        "subName": "string",
-                        "path": "string",
-                        "created_at": "string"
+                      "id": "number",
+                      "name": "string",
+                      "description": "string",
+                      "is_published": "boolean",
+                      "subName": "string",
+                      "path": "string",
+                      "created_at": "string"
                     },
                     "types": {
-                        "id": "number",
-                        "test_id": "number",
-                        "type": "string",
-                        "description": "string"
+                      "id": "number",
+                      "test_id": "number",
+                      "type": "string",
+                      "description": "string"
                     },
                     "questions": {
-                        "id": "number",
-                        "test_id": "number",
-                        "content": "string",
-                        "types": [],
-                        "set_id": "number"
+                      "id": "number",
+                      "test_id": "number",
+                      "content": "string",
+                      "types": [],
+                      "set_id": "number"
                     }
                   }
                 }
@@ -1567,26 +1565,26 @@
                 "result": {
                   "example": {
                     "test": {
-                        "id": "number",
-                        "name": "string",
-                        "description": "string",
-                        "is_published": "boolean",
-                        "subName": "string",
-                        "path": "string",
-                        "created_at": "string"
+                      "id": "number",
+                      "name": "string",
+                      "description": "string",
+                      "is_published": "boolean",
+                      "subName": "string",
+                      "path": "string",
+                      "created_at": "string"
                     },
                     "types": {
-                        "id": "number",
-                        "test_id": "number",
-                        "type": "string",
-                        "description": "string"
+                      "id": "number",
+                      "test_id": "number",
+                      "type": "string",
+                      "description": "string"
                     },
                     "questions": {
-                        "id": "number",
-                        "test_id": "number",
-                        "content": "string",
-                        "types": [],
-                        "set_id": "number"
+                      "id": "number",
+                      "test_id": "number",
+                      "content": "string",
+                      "types": [],
+                      "set_id": "number"
                     }
                   }
                 }

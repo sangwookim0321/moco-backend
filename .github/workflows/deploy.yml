@@ -1,0 +1,36 @@
+name: Deploy to Server
+
+on:
+  push:
+    branches: [ master ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v2
+
+    - name: Set up SSH
+      run: |
+        which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )
+        eval $(ssh-agent -s)
+        echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+        mkdir -p ~/.ssh/
+        echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+        echo "REMOTE_HOST: $REMOTE_HOST"
+        ssh-keyscan -H $REMOTE_HOST 2>&1 | tee -a ~/.ssh/known_hosts
+        echo "SSH Set Up Complete"
+    - name: Deploy to Server
+      run: |
+        ssh $REMOTE_USER@$REMOTE_HOST "cd $TARGET && git pull"
+        # rsync -avz --exclude='.git*' --exclude='node_modules' ./ $REMOTE_USER@$REMOTE_HOST:$TARGET
+    - name: Restart Server
+      run: |
+        ssh $REMOTE_USER@$REMOTE_HOST "cd $TARGET && screen -S moco_server -X quit; screen -dmS moco_server npm start"
+    env:
+      SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+      REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
+      REMOTE_USER: ${{ secrets.REMOTE_USER }}
+      TARGET: ${{ secrets.TARGET }}
